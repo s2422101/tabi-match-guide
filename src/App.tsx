@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import "./App.css";
 import { PreferenceForm } from "./components/PreferenceForm";
 import { RestaurantCard } from "./components/RestaurantCard";
-import { restaurants } from "./data/restaurants";
 import type { RestaurantFeature } from "./types/restaurant";
 import { calculateMatchScore } from "./utils/match";
+import { getRestaurants } from "./utils/restaurantStorage";
 
 function App() {
+  const [restaurants] = useState(getRestaurants);
   const [selectedFeatures, setSelectedFeatures] = useState<
     RestaurantFeature[]
   >([]);
@@ -30,7 +31,7 @@ function App() {
       ),
     }))
     .sort((a, b) => b.matchScore - a.matchScore);
-}, [selectedFeatures, selectedArea]);
+}, [restaurants, selectedFeatures, selectedArea]);
 
   return (
     <main>

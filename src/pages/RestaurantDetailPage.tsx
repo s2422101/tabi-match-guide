@@ -1,11 +1,11 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { restaurants } from "../data/restaurants";
 import type { RestaurantFeature } from "../types/restaurant";
 import {
   featureLabels,
   featureLabelsJa,
 } from "../utils/features";
 import { calculateMatchScore } from "../utils/match";
+import { getRestaurants } from "../utils/restaurantStorage";
 
 const validFeatures: RestaurantFeature[] = [
   "credit_card",
@@ -36,7 +36,7 @@ function getSelectedFeaturesFromSearchParams(
 export function RestaurantDetailPage() {
   const { restaurantId } = useParams();
   const [searchParams] = useSearchParams();
-  const restaurant = restaurants.find(
+  const restaurant = getRestaurants().find(
     (item) => item.id === Number(restaurantId),
   );
 
@@ -67,6 +67,9 @@ export function RestaurantDetailPage() {
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${restaurant.nameEn} ${restaurant.area} Japan`,
   )}`;
+  const editPath = `/restaurants/${restaurant.id}/edit${
+    searchParams.size > 0 ? `?${searchParams.toString()}` : ""
+  }`;
 
   return (
     <main className="detail-page">
@@ -93,6 +96,14 @@ export function RestaurantDetailPage() {
             <strong>{matchScore}%</strong>
             <span>Match</span>
           </div>
+
+          <Link
+            to={editPath}
+            className="edit-button"
+          >
+            Edit restaurant information
+            <span>店舗情報を編集</span>
+          </Link>
         </div>
       </section>
 
