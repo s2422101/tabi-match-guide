@@ -1,4 +1,5 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { HotpepperAttribution } from "../components/HotpepperAttribution";
 import type { RestaurantFeature } from "../types/restaurant";
 import {
   featureLabels,
@@ -64,9 +65,12 @@ export function RestaurantDetailPage() {
     restaurant,
     selectedFeatures,
   );
-  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${restaurant.nameEn} ${restaurant.area} Japan`,
-  )}`;
+  const mapQuery =
+    typeof restaurant.latitude === "number" &&
+    typeof restaurant.longitude === "number"
+      ? `${restaurant.latitude},${restaurant.longitude}`
+      : restaurant.address || `${restaurant.nameEn} ${restaurant.area} Japan`;
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
   const editPath = `/restaurants/${restaurant.id}/edit${
     searchParams.size > 0 ? `?${searchParams.toString()}` : ""
   }`;
@@ -117,6 +121,29 @@ export function RestaurantDetailPage() {
           </p>
         </div>
 
+        {(restaurant.address || restaurant.openingHours || restaurant.budget) && (
+          <dl className="detail-info-grid">
+            {restaurant.address && (
+              <div>
+                <dt>Address <small>住所</small></dt>
+                <dd>{restaurant.address}</dd>
+              </div>
+            )}
+            {restaurant.openingHours && (
+              <div>
+                <dt>Opening hours <small>営業時間</small></dt>
+                <dd>{restaurant.openingHours}</dd>
+              </div>
+            )}
+            {restaurant.budget && (
+              <div>
+                <dt>Budget <small>予算</small></dt>
+                <dd>{restaurant.budget}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+
         <div>
           <p className="eyebrow">Available conditions</p>
           <h2>Supported needs</h2>
@@ -132,15 +159,31 @@ export function RestaurantDetailPage() {
           </div>
         </div>
 
-        <a
-          href={mapUrl}
-          className="map-button"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open in Google Maps
-          <span>Googleマップで開く</span>
-        </a>
+        <div className="detail-link-actions">
+          <a
+            href={mapUrl}
+            className="map-button"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Google Maps
+            <span>Googleマップで開く</span>
+          </a>
+
+          {restaurant.sourceUrl && (
+            <a
+              href={restaurant.sourceUrl}
+              className="hotpepper-button"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open in Hot Pepper Gourmet
+              <span>ホットペッパーグルメで開く</span>
+            </a>
+          )}
+        </div>
+
+        {restaurant.isApiRestaurant && <HotpepperAttribution />}
       </section>
     </main>
   );

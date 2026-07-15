@@ -11,6 +11,7 @@ export type RestaurantFeature =
 
 export type Restaurant = {
   id: number;
+  externalId?: string;
   nameJa: string;
   nameEn: string;
   genre: string;
@@ -18,4 +19,11 @@ export type Restaurant = {
   description: string;
   imageUrl: string;
   features: RestaurantFeature[];
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  openingHours?: string;
+  budget?: string;
+  sourceUrl?: string;
+  isApiRestaurant?: boolean;
 };

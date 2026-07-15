@@ -51,6 +51,29 @@ export function RestaurantCard({
 
         <p>{restaurant.description}</p>
 
+        {(restaurant.address || restaurant.openingHours || restaurant.budget) && (
+          <dl className="restaurant-info-grid">
+            {restaurant.address && (
+              <div>
+                <dt>Address <small>住所</small></dt>
+                <dd>{restaurant.address}</dd>
+              </div>
+            )}
+            {restaurant.openingHours && (
+              <div>
+                <dt>Opening hours <small>営業時間</small></dt>
+                <dd>{restaurant.openingHours}</dd>
+              </div>
+            )}
+            {restaurant.budget && (
+              <div>
+                <dt>Budget <small>予算</small></dt>
+                <dd>{restaurant.budget}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+
         <div className="match-details">
           {selectedFeatures.map((feature) => {
             const isMatched =
