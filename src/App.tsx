@@ -4,6 +4,10 @@ import { HotpepperAttribution } from "./components/HotpepperAttribution";
 import { PreferenceForm } from "./components/PreferenceForm";
 import { RestaurantCard } from "./components/RestaurantCard";
 import {
+  isDeepLApiConfigured,
+  translateRestaurants,
+} from "./services/deeplApi";
+import {
   fetchHotpepperRestaurants,
   isHotpepperApiConfigured,
   type SearchArea,
@@ -23,28 +27,43 @@ function App() {
     RestaurantFeature[]
   >([]);
   const [selectedArea, setSelectedArea] = useState<SearchArea>("all");
-  const [isLoading, setIsLoading] = useState(hasApiKey);
+  const [loadingState, setLoadingState] = useState<
+    "restaurants" | "translation" | null
+  >(hasApiKey ? "restaurants" : null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!hasApiKey) {
       setRestaurants(getSampleRestaurants());
-      setIsLoading(false);
+      setLoadingState(null);
       setErrorMessage(null);
       return;
     }
 
     const controller = new AbortController();
-    setIsLoading(true);
+    setLoadingState("restaurants");
     setErrorMessage(null);
 
-    void fetchHotpepperRestaurants(selectedArea, controller.signal)
-      .then((fetchedRestaurants) => {
-        cacheApiRestaurants(fetchedRestaurants);
-        setRestaurants(mergeRestaurantsWithSaved(fetchedRestaurants));
-      })
-      .catch((error: unknown) => {
+    void (async () => {
+      try {
+        const fetchedRestaurants = await fetchHotpepperRestaurants(
+          selectedArea,
+          controller.signal,
+        );
+        let displayRestaurants = fetchedRestaurants;
+
+        if (isDeepLApiConfigured()) {
+          setLoadingState("translation");
+          displayRestaurants = await translateRestaurants(
+            fetchedRestaurants,
+            controller.signal,
+          );
+        }
+
+        cacheApiRestaurants(displayRestaurants);
+        setRestaurants(mergeRestaurantsWithSaved(displayRestaurants));
+      } catch (error: unknown) {
         if (controller.signal.aborted) {
           return;
         }
@@ -55,12 +74,12 @@ function App() {
             ? error.message
             : "Failed to load restaurants.",
         );
-      })
-      .finally(() => {
+      } finally {
         if (!controller.signal.aborted) {
-          setIsLoading(false);
+          setLoadingState(null);
         }
-      });
+      }
+    })();
 
     return () => controller.abort();
   }, [hasApiKey, retryCount, selectedArea]);
@@ -155,7 +174,7 @@ function App() {
             <p className="section-title-ja">おすすめの飲食店</p>
           </div>
 
-          {!isLoading && !errorMessage && (
+          {!loadingState && !errorMessage && (
             <p className="result-count">
               {rankedRestaurants.length} restaurants found
               <span className="result-count-ja">
@@ -165,10 +184,18 @@ function App() {
           )}
         </div>
 
-        {isLoading ? (
+        {loadingState ? (
           <div className="results-status" aria-live="polite">
-            <strong>Loading restaurants...</strong>
-            <span>店舗情報を読み込んでいます…</span>
+            <strong>
+              {loadingState === "translation"
+                ? "Loading translation..."
+                : "Loading restaurants..."}
+            </strong>
+            <span>
+              {loadingState === "translation"
+                ? "英語へ翻訳しています…"
+                : "店舗情報を読み込んでいます…"}
+            </span>
           </div>
         ) : errorMessage ? (
           <div className="results-status error-status" role="alert">

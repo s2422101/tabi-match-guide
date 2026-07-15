@@ -116,8 +116,12 @@ export function RestaurantDetailPage() {
           <p className="eyebrow">About</p>
           <h2>Restaurant information</h2>
           <p className="section-title-ja">店舗情報</p>
-          <p className="detail-description">
-            {restaurant.description}
+          <p className="detail-description translated-content">
+            <span>{restaurant.description}</span>
+            {restaurant.descriptionJa &&
+              restaurant.descriptionJa !== restaurant.description && (
+                <small>{restaurant.descriptionJa}</small>
+              )}
           </p>
         </div>
 
@@ -126,19 +130,37 @@ export function RestaurantDetailPage() {
             {restaurant.address && (
               <div>
                 <dt>Address <small>住所</small></dt>
-                <dd>{restaurant.address}</dd>
+                <dd className="translated-content">
+                  <span>{restaurant.address}</span>
+                  {restaurant.addressJa &&
+                    restaurant.addressJa !== restaurant.address && (
+                      <small>{restaurant.addressJa}</small>
+                    )}
+                </dd>
               </div>
             )}
             {restaurant.openingHours && (
               <div>
                 <dt>Opening hours <small>営業時間</small></dt>
-                <dd>{restaurant.openingHours}</dd>
+                <dd className="translated-content">
+                  <span>{restaurant.openingHours}</span>
+                  {restaurant.openingHoursJa &&
+                    restaurant.openingHoursJa !== restaurant.openingHours && (
+                      <small>{restaurant.openingHoursJa}</small>
+                    )}
+                </dd>
               </div>
             )}
             {restaurant.budget && (
               <div>
                 <dt>Budget <small>予算</small></dt>
-                <dd>{restaurant.budget}</dd>
+                <dd className="translated-content">
+                  <span>{restaurant.budget}</span>
+                  {restaurant.budgetJa &&
+                    restaurant.budgetJa !== restaurant.budget && (
+                      <small>{restaurant.budgetJa}</small>
+                    )}
+                </dd>
               </div>
             )}
           </dl>

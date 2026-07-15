@@ -17,13 +17,17 @@ export type Restaurant = {
   genre: string;
   area: string;
   description: string;
+  descriptionJa?: string;
   imageUrl: string;
   features: RestaurantFeature[];
   address?: string;
+  addressJa?: string;
   latitude?: number;
   longitude?: number;
   openingHours?: string;
+  openingHoursJa?: string;
   budget?: string;
+  budgetJa?: string;
   sourceUrl?: string;
   isApiRestaurant?: boolean;
 };

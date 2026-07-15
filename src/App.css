@@ -846,6 +846,18 @@ main {
   font-weight: 800;
 }
 
+.translated-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.translated-content small {
+  color: #7a8582;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
 @media (max-width: 760px) {
   .restaurant-info-grid,
   .detail-info-grid {

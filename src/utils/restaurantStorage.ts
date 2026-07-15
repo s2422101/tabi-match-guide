@@ -28,9 +28,20 @@ export function mergeRestaurantsWithSaved(
     readRestaurants(storageKey).map((restaurant) => [restaurant.id, restaurant]),
   );
 
-  return restaurants.map(
-    (restaurant) => savedById.get(restaurant.id) ?? restaurant,
-  );
+  return restaurants.map((restaurant) => {
+    const savedRestaurant = savedById.get(restaurant.id);
+
+    if (!savedRestaurant) {
+      return restaurant;
+    }
+
+    return {
+      ...restaurant,
+      nameEn: savedRestaurant.nameEn,
+      nameJa: savedRestaurant.nameJa,
+      features: savedRestaurant.features,
+    };
+  });
 }
 
 export function getSampleRestaurants(): Restaurant[] {
