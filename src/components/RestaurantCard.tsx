@@ -1,25 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { FeatureStatusItem } from "./FeatureStatusItem";
+import { MatchSummary } from "./MatchSummary";
 import type {
   Restaurant,
   RestaurantFeature,
 } from "../types/restaurant";
-import { featureLabels } from "../utils/features";
+import { getFeatureStatus } from "../utils/features";
+import type { MatchResult } from "../utils/match";
+import type { ReturnNavigationState } from "../utils/restaurantSearch";
 
 type Props = {
   restaurant: Restaurant;
   selectedFeatures: RestaurantFeature[];
-  matchScore: number;
+  matchResult: MatchResult;
 };
 
 export function RestaurantCard({
   restaurant,
   selectedFeatures,
-  matchScore,
+  matchResult,
 }: Props) {
-  const detailPath =
-    selectedFeatures.length > 0
-      ? `/restaurants/${restaurant.id}?features=${selectedFeatures.join(",")}`
-      : `/restaurants/${restaurant.id}`;
+  const location = useLocation();
+  const listPath = `${location.pathname}${location.search}`;
+  const detailPath = `/restaurants/${restaurant.id}${location.search}`;
+  const returnState: ReturnNavigationState = { from: listPath };
 
   return (
     <article className="restaurant-card">
@@ -43,10 +47,7 @@ export function RestaurantCard({
             </p>
           </div>
 
-          <div className="match-score">
-            <strong>{matchScore}%</strong>
-            <span>Match</span>
-          </div>
+          <MatchSummary result={matchResult} />
         </div>
 
         <p className="translated-content">
@@ -99,26 +100,20 @@ export function RestaurantCard({
         )}
 
         <div className="match-details">
-          {selectedFeatures.map((feature) => {
-            const isMatched =
-              restaurant.features.includes(feature);
-
-            return (
-              <span
-                className={
-                  isMatched
-                    ? "feature matched"
-                    : "feature unmatched"
-                }
-                key={feature}
-              >
-                {isMatched ? "✓" : "△"} {featureLabels[feature]}
-              </span>
-            );
-          })}
+          {selectedFeatures.map((feature) => (
+            <FeatureStatusItem
+              feature={feature}
+              status={getFeatureStatus(restaurant, feature)}
+              key={feature}
+            />
+          ))}
         </div>
 
-        <Link to={detailPath} className="details-button">
+        <Link
+          to={detailPath}
+          state={returnState}
+          className="details-button"
+        >
           View restaurant
         </Link>
       </div>

@@ -9,6 +9,12 @@ export type RestaurantFeature =
   | "pork_free"
   | "alcohol_free";
 
+export type FeatureStatus = "supported" | "unsupported" | "unknown";
+
+export type FeatureStatusMap = Record<RestaurantFeature, FeatureStatus>;
+
+export type SearchArea = "all" | "Asakusa" | "Ueno";
+
 export type Restaurant = {
   id: number;
   externalId?: string;
@@ -19,7 +25,9 @@ export type Restaurant = {
   description: string;
   descriptionJa?: string;
   imageUrl: string;
-  features: RestaurantFeature[];
+  featureStatuses: FeatureStatusMap;
+  /** Legacy localStorage field. Read only during migration. */
+  features?: RestaurantFeature[];
   address?: string;
   addressJa?: string;
   latitude?: number;

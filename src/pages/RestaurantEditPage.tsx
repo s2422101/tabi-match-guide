@@ -1,16 +1,29 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import {
   Link,
   useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
-import type { RestaurantFeature } from "../types/restaurant";
-import { featureLabels, featureLabelsJa } from "../utils/features";
+import type {
+  FeatureStatus,
+  RestaurantFeature,
+} from "../types/restaurant";
+import {
+  createUnknownFeatureStatuses,
+  featureEditStatusLabels,
+  featureLabels,
+  featureLabelsJa,
+  featureStatusLabelsJa,
+} from "../utils/features";
 import {
   getRestaurants,
   saveRestaurant,
 } from "../utils/restaurantStorage";
+import {
+  canNavigateBack,
+  getReturnPath,
+} from "../utils/restaurantSearch";
 
 const editableFeatures: RestaurantFeature[] = [
   "english_guide",
@@ -24,6 +37,12 @@ const editableFeatures: RestaurantFeature[] = [
   "alcohol_free",
 ];
 
+const editableStatuses: FeatureStatus[] = [
+  "supported",
+  "unsupported",
+  "unknown",
+];
+
 export function RestaurantEditPage() {
   const { restaurantId } = useParams();
   const location = useLocation();
@@ -33,9 +52,31 @@ export function RestaurantEditPage() {
   );
   const [nameEn, setNameEn] = useState(restaurant?.nameEn ?? "");
   const [nameJa, setNameJa] = useState(restaurant?.nameJa ?? "");
-  const [features, setFeatures] = useState<RestaurantFeature[]>(
-    restaurant?.features ?? [],
+  const [featureStatuses, setFeatureStatuses] = useState(
+    restaurant?.featureStatuses ?? createUnknownFeatureStatuses(),
   );
+  const isDirty = restaurant
+    ? nameEn !== restaurant.nameEn ||
+      nameJa !== restaurant.nameJa ||
+      editableFeatures.some(
+        (feature) =>
+          featureStatuses[feature] !== restaurant.featureStatuses[feature],
+      )
+    : false;
+
+  useEffect(() => {
+    if (!isDirty) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   if (!restaurant) {
     return (
@@ -55,13 +96,35 @@ export function RestaurantEditPage() {
   }
 
   const detailPath = `/restaurants/${restaurant.id}${location.search}`;
+  const returnPath = getReturnPath(location.state);
 
-  const handleFeatureToggle = (feature: RestaurantFeature) => {
-    setFeatures((currentFeatures) =>
-      currentFeatures.includes(feature)
-        ? currentFeatures.filter((item) => item !== feature)
-        : [...currentFeatures, feature],
+  const handleStatusChange = (
+    feature: RestaurantFeature,
+    status: FeatureStatus,
+  ) => {
+    setFeatureStatuses((currentStatuses) => ({
+      ...currentStatuses,
+      [feature]: status,
+    }));
+  };
+
+  const confirmDiscardChanges = () =>
+    !isDirty ||
+    window.confirm(
+      "Discard unsaved changes?\n保存していない変更を破棄しますか？",
     );
+
+  const handleCancel = () => {
+    if (!confirmDiscardChanges()) {
+      return;
+    }
+
+    if (returnPath === detailPath && canNavigateBack()) {
+      navigate(-1);
+      return;
+    }
+
+    navigate(detailPath);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -70,17 +133,22 @@ export function RestaurantEditPage() {
       ...restaurant,
       nameEn: nameEn.trim(),
       nameJa: nameJa.trim(),
-      features,
+      featureStatuses,
     });
-    navigate(detailPath);
+    navigate(detailPath, { replace: true });
   };
 
   return (
     <main className="edit-page">
       <section className="edit-panel">
-        <Link to={detailPath} className="back-link">
-          Back to restaurant details
-        </Link>
+        <button
+          type="button"
+          className="back-link edit-back-button"
+          onClick={handleCancel}
+        >
+          <strong>Back to restaurant details</strong>
+          <span>店舗詳細へ戻る</span>
+        </button>
 
         <p className="eyebrow">Restaurant management</p>
         <h1>Edit restaurant information</h1>
@@ -119,17 +187,33 @@ export function RestaurantEditPage() {
 
             <div className="edit-feature-grid">
               {editableFeatures.map((feature) => (
-                <label className="edit-checkbox" key={feature}>
-                  <input
-                    type="checkbox"
-                    checked={features.includes(feature)}
-                    onChange={() => handleFeatureToggle(feature)}
-                  />
-                  <span>
+                <div className="edit-feature-status" key={feature}>
+                  <div className="edit-feature-name">
                     <strong>{featureLabels[feature]}</strong>
                     <small>{featureLabelsJa[feature]}</small>
-                  </span>
-                </label>
+                  </div>
+
+                  <div className="edit-status-options">
+                    {editableStatuses.map((status) => (
+                      <label
+                        className={`edit-status-option status-${status}`}
+                        key={status}
+                      >
+                        <input
+                          type="radio"
+                          name={`feature-${feature}`}
+                          value={status}
+                          checked={featureStatuses[feature] === status}
+                          onChange={() => handleStatusChange(feature, status)}
+                        />
+                        <span>
+                          <strong>{featureEditStatusLabels[status]}</strong>
+                          <small>{featureStatusLabelsJa[status]}</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </fieldset>
@@ -139,9 +223,14 @@ export function RestaurantEditPage() {
               Save changes
               <span>変更を保存</span>
             </button>
-            <Link to={detailPath} className="cancel-button">
-              Cancel
-            </Link>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={handleCancel}
+            >
+              <strong>Cancel and go back</strong>
+              <span>変更せず店舗詳細へ戻る</span>
+            </button>
           </div>
         </form>
       </section>

@@ -5,7 +5,10 @@ type DeepLResponse = {
     detected_source_language?: string;
     text?: string;
   }>;
-  message?: string;
+  error?: {
+    code?: string;
+    message?: string;
+  };
 };
 
 type TranslatableRestaurantFields = {
@@ -15,13 +18,9 @@ type TranslatableRestaurantFields = {
   budget?: string;
 };
 
-const apiEndpoint = "/deepl-api/v2/translate";
+const apiEndpoint = "/api/translate";
 const cacheKey = "tabi-match-guide:deepl-translations:en-us";
 const maximumTextsPerRequest = 50;
-
-export function isDeepLApiConfigured(): boolean {
-  return __DEEPL_API_CONFIGURED__;
-}
 
 function readTranslationCache(): Record<string, string> {
   try {
@@ -95,7 +94,9 @@ async function requestTranslations(
   const data = (await response.json()) as DeepLResponse;
 
   if (!response.ok) {
-    throw new Error(data.message || `DeepL API request failed (${response.status}).`);
+    throw new Error(
+      data.error?.message || `Translation API request failed (${response.status}).`,
+    );
   }
 
   const translations = data.translations?.map((translation) => translation.text);
@@ -138,10 +139,6 @@ export async function translateRestaurants(
   restaurants: Restaurant[],
   signal?: AbortSignal,
 ): Promise<Restaurant[]> {
-  if (!isDeepLApiConfigured()) {
-    return restaurants;
-  }
-
   const cache = readTranslationCache();
   const missingTexts = getUniqueTexts(restaurants).filter((text) => !cache[text]);
 

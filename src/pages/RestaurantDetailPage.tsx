@@ -1,45 +1,43 @@
-import { Link, useParams, useSearchParams } from "react-router-dom";
-import { HotpepperAttribution } from "../components/HotpepperAttribution";
-import type { RestaurantFeature } from "../types/restaurant";
 import {
-  featureLabels,
-  featureLabelsJa,
-} from "../utils/features";
-import { calculateMatchScore } from "../utils/match";
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import { FeatureStatusItem } from "../components/FeatureStatusItem";
+import { HotpepperAttribution } from "../components/HotpepperAttribution";
+import { MatchSummary } from "../components/MatchSummary";
+import { getFeatureStatus } from "../utils/features";
+import { calculateMatchResult } from "../utils/match";
 import { getRestaurants } from "../utils/restaurantStorage";
-
-const validFeatures: RestaurantFeature[] = [
-  "credit_card",
-  "non_smoking",
-  "english_guide",
-  "wifi",
-  "takeout",
-  "vegetarian",
-  "vegan",
-  "pork_free",
-  "alcohol_free",
-];
-
-function getSelectedFeaturesFromSearchParams(
-  featuresParam: string | null,
-): RestaurantFeature[] {
-  if (!featuresParam) {
-    return [];
-  }
-
-  return featuresParam
-    .split(",")
-    .filter((feature): feature is RestaurantFeature =>
-      validFeatures.includes(feature as RestaurantFeature),
-    );
-}
+import {
+  canNavigateBack,
+  getFeaturesFromSearchParams,
+  getListPath,
+  getReturnPath,
+  type ReturnNavigationState,
+} from "../utils/restaurantSearch";
 
 export function RestaurantDetailPage() {
   const { restaurantId } = useParams();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const restaurant = getRestaurants().find(
     (item) => item.id === Number(restaurantId),
   );
+  const listFallbackPath = getListPath(searchParams);
+  const returnPath = getReturnPath(location.state);
+
+  const handleBackToList = () => {
+    if (returnPath && canNavigateBack()) {
+      navigate(-1);
+      return;
+    }
+
+    navigate(listFallbackPath);
+  };
 
   if (!restaurant) {
     return (
@@ -50,18 +48,21 @@ export function RestaurantDetailPage() {
           <p className="detail-ja">
             指定された飲食店が見つかりませんでした。
           </p>
-          <Link to="/" className="back-link">
-            Back to restaurant list
-          </Link>
+          <button
+            type="button"
+            className="detail-back-button"
+            onClick={handleBackToList}
+          >
+            <strong>Back to restaurant list</strong>
+            <span>店舗一覧へ戻る</span>
+          </button>
         </section>
       </main>
     );
   }
 
-  const selectedFeatures = getSelectedFeaturesFromSearchParams(
-    searchParams.get("features"),
-  );
-  const matchScore = calculateMatchScore(
+  const selectedFeatures = getFeaturesFromSearchParams(searchParams);
+  const matchResult = calculateMatchResult(
     restaurant,
     selectedFeatures,
   );
@@ -74,9 +75,22 @@ export function RestaurantDetailPage() {
   const editPath = `/restaurants/${restaurant.id}/edit${
     searchParams.size > 0 ? `?${searchParams.toString()}` : ""
   }`;
+  const detailPath = `${location.pathname}${location.search}`;
+  const editReturnState: ReturnNavigationState = { from: detailPath };
 
   return (
     <main className="detail-page">
+      <nav className="detail-top-navigation" aria-label="Restaurant navigation">
+        <button
+          type="button"
+          className="detail-back-button"
+          onClick={handleBackToList}
+        >
+          <strong>Back to restaurant list</strong>
+          <span>店舗一覧へ戻る</span>
+        </button>
+      </nav>
+
       <section className="detail-hero">
         <img
           src={restaurant.imageUrl}
@@ -85,10 +99,6 @@ export function RestaurantDetailPage() {
         />
 
         <div className="detail-summary">
-          <Link to="/" className="back-link">
-            Back to restaurant list
-          </Link>
-
           <p className="restaurant-area">
             {restaurant.area} · {restaurant.genre}
           </p>
@@ -96,13 +106,13 @@ export function RestaurantDetailPage() {
           <h1>{restaurant.nameEn}</h1>
           <p className="detail-name-ja">{restaurant.nameJa}</p>
 
-          <div className="match-score detail-score">
-            <strong>{matchScore}%</strong>
-            <span>Match</span>
+          <div className="detail-score">
+            <MatchSummary result={matchResult} />
           </div>
 
           <Link
             to={editPath}
+            state={editReturnState}
             className="edit-button"
           >
             Edit restaurant information
@@ -167,17 +177,25 @@ export function RestaurantDetailPage() {
         )}
 
         <div>
-          <p className="eyebrow">Available conditions</p>
-          <h2>Supported needs</h2>
-          <p className="section-title-ja">対応条件</p>
+          <p className="eyebrow">Condition verification</p>
+          <h2>Selected condition status</h2>
+          <p className="section-title-ja">選択条件の確認状況</p>
 
           <div className="detail-feature-list">
-            {restaurant.features.map((feature) => (
-              <span className="feature matched" key={feature}>
-                {featureLabels[feature]}
-                <small>{featureLabelsJa[feature]}</small>
-              </span>
-            ))}
+            {selectedFeatures.length > 0 ? (
+              selectedFeatures.map((feature) => (
+                <FeatureStatusItem
+                  feature={feature}
+                  status={getFeatureStatus(restaurant, feature)}
+                  key={feature}
+                />
+              ))
+            ) : (
+              <p className="no-selected-conditions">
+                No conditions selected
+                <small>条件が選択されていません</small>
+              </p>
+            )}
           </div>
         </div>
 

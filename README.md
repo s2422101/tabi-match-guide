@@ -1,32 +1,84 @@
-# React + TypeScript + Vite
+# TabiMatch Guide
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+浅草・上野周辺の飲食店を、希望条件とのマッチ率と英語翻訳付きで探せるReactアプリです。
+ホットペッパーグルメAPIとDeepL APIは、Honoバックエンドを経由して呼び出します。
 
-Currently, two official plugins are available:
+以下のコマンドは、プロジェクト直下をカレントディレクトリにして実行してください。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cd /path/to/tabi-match-guide
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## 構成
+
+- フロントエンド: React、Vite、TypeScript（`http://localhost:5173`）
+- バックエンド: Hono、Node.js、TypeScript（`http://localhost:3000`）
+- `GET /api/restaurants?area=all|Asakusa|Ueno`
+- `POST /api/translate`
+
+## セットアップ
+
+Node.js 20以降を推奨します。
+
+```bash
+npm install
+cp .env.example .env
+```
+
+`.env`にAPIキーを設定してください。
+
+```env
+HOTPEPPER_API_KEY=your_hotpepper_api_key_here
+DEEPL_API_KEY=your_deepl_api_key_here
+CORS_ORIGIN=http://localhost:5173
+API_TIMEOUT_MS=10000
+```
+
+環境変数に`VITE_`を付けないでください。APIキーはHonoサーバーのみが参照します。
+DeepL API Freeのキーは末尾の`:fx`から自動判定されます。
+
+## 起動
+
+フロントエンドとバックエンドを同時に起動します。
+
+```bash
+npm run dev
+```
+
+個別に起動する場合は、別々のターミナルで実行してください。
+
+```bash
+npm run dev:server
+npm run dev:client
+```
+
+バックエンドだけをwatchなしで起動する場合:
+
+```bash
+npm run server
+```
+
+## 品質確認
+
+```bash
+npm run lint
+npm run build
+```
+
+## APIの確認例
+
+```bash
+curl "http://localhost:3000/api/restaurants?area=Asakusa"
+```
+
+```bash
+curl -X POST "http://localhost:3000/api/translate" \
+  -H "Content-Type: application/json" \
+  -d '{"text":["浅草駅から徒歩5分です。"]}'
+```
+
+APIキー未設定時、店舗一覧は既存のサンプルデータへフォールバックします。翻訳に失敗した場合は、localStorageのキャッシュまたは日本語原文を表示します。
+
+## 本番環境について
+
+Viteの`/api` proxyは開発用です。本番ではリバースプロキシやホスティング設定で、フロントエンドの`/api`をHonoバックエンドへ転送してください。`.env`はGitへコミットしないでください。

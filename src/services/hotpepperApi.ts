@@ -1,9 +1,9 @@
 import type {
+  FeatureStatusMap,
   Restaurant,
-  RestaurantFeature,
+  SearchArea,
 } from "../types/restaurant";
-
-export type SearchArea = "all" | "Asakusa" | "Ueno";
+import { createUnknownFeatureStatuses } from "../utils/features";
 
 type HotpepperShop = {
   id?: string;
@@ -23,29 +23,27 @@ type HotpepperShop = {
   urls?: { pc?: string };
 };
 
-type HotpepperError = {
-  code?: number;
-  message?: string;
-};
-
 type HotpepperResponse = {
-  results?: {
-    results_available?: number;
-    shop?: HotpepperShop[];
-    error?: HotpepperError | HotpepperError[];
+  restaurants?: Array<{
+    area: Exclude<SearchArea, "all">;
+    shop: HotpepperShop;
+  }>;
+  error?: {
+    code?: string;
+    message?: string;
   };
 };
 
-const apiEndpoint = "/hotpepper-api/hotpepper/gourmet/v1/";
-const areaKeywords = {
-  Asakusa: "浅草",
-  Ueno: "上野",
-} as const;
+const apiEndpoint = "/api/restaurants";
 
-// VITE_ variables are embedded in the browser bundle. This proxy setup is only
-// for prototyping; production must move the API request and key to a backend.
-export function isHotpepperApiConfigured(): boolean {
-  return Boolean(import.meta.env.VITE_HOTPEPPER_API_KEY?.trim());
+export class RestaurantApiError extends Error {
+  readonly code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "RestaurantApiError";
+    this.code = code;
+  }
 }
 
 function createStableRestaurantId(externalId: string): number {
@@ -58,22 +56,31 @@ function createStableRestaurantId(externalId: string): number {
   return 1_000_000 + (hash >>> 0);
 }
 
-function getFeatures(shop: HotpepperShop): RestaurantFeature[] {
-  const features: RestaurantFeature[] = [];
+function getFeatureStatuses(shop: HotpepperShop): FeatureStatusMap {
+  const statuses = createUnknownFeatureStatuses();
 
   if (shop.card === "利用可") {
-    features.push("credit_card");
+    statuses.credit_card = "supported";
+  } else if (shop.card === "利用不可") {
+    statuses.credit_card = "unsupported";
   }
 
   if (shop.non_smoking?.includes("全面禁煙")) {
-    features.push("non_smoking");
+    statuses.non_smoking = "supported";
+  } else if (
+    shop.non_smoking?.includes("一部禁煙") ||
+    shop.non_smoking?.includes("禁煙席なし")
+  ) {
+    statuses.non_smoking = "unsupported";
   }
 
   if (shop.wifi === "あり") {
-    features.push("wifi");
+    statuses.wifi = "supported";
+  } else if (shop.wifi === "なし") {
+    statuses.wifi = "unsupported";
   }
 
-  return features;
+  return statuses;
 }
 
 function convertShop(
@@ -96,7 +103,7 @@ function convertShop(
       shop.photo?.pc?.l ||
       shop.photo?.pc?.m ||
       "https://placehold.co/600x400?text=Restaurant",
-    features: getFeatures(shop),
+    featureStatuses: getFeatureStatuses(shop),
     address: shop.address,
     latitude: shop.lat,
     longitude: shop.lng,
@@ -107,72 +114,43 @@ function convertShop(
   };
 }
 
-function getApiError(response: HotpepperResponse): string | null {
-  const errors = response.results?.error;
-
-  if (!errors) {
-    return null;
-  }
-
-  const firstError = Array.isArray(errors) ? errors[0] : errors;
-  return firstError?.message || "Hot Pepper Gourmet API returned an error.";
-}
-
-async function fetchAreaRestaurants(
-  area: Exclude<SearchArea, "all">,
-  signal?: AbortSignal,
-): Promise<Restaurant[]> {
-  const apiKey = import.meta.env.VITE_HOTPEPPER_API_KEY?.trim();
-
-  if (!apiKey) {
-    throw new Error("Hot Pepper Gourmet API key is not configured.");
-  }
-
-  const parameters = new URLSearchParams({
-    key: apiKey,
-    keyword: areaKeywords[area],
-    count: "30",
-    format: "json",
-  });
-  const response = await fetch(`${apiEndpoint}?${parameters}`, { signal });
-
-  if (!response.ok) {
-    throw new Error(`Hot Pepper Gourmet API request failed (${response.status}).`);
-  }
-
-  const data = (await response.json()) as HotpepperResponse;
-  const apiError = getApiError(data);
-
-  if (apiError) {
-    throw new Error(apiError);
-  }
-
-  return (data.results?.shop ?? [])
-    .map((shop) => convertShop(shop, area))
-    .filter((restaurant): restaurant is Restaurant => restaurant !== null);
-}
-
 export async function fetchHotpepperRestaurants(
   area: SearchArea,
   signal?: AbortSignal,
 ): Promise<Restaurant[]> {
-  const targetAreas: Exclude<SearchArea, "all">[] =
-    area === "all" ? ["Asakusa", "Ueno"] : [area];
-  const areaResults = await Promise.all(
-    targetAreas.map((targetArea) => fetchAreaRestaurants(targetArea, signal)),
-  );
-  const uniqueRestaurants = new Map<string, Restaurant>();
+  const parameters = new URLSearchParams({ area });
+  const response = await fetch(`${apiEndpoint}?${parameters}`, { signal });
+  let data: HotpepperResponse;
 
-  for (const restaurant of areaResults.flat()) {
-    if (restaurant.externalId) {
-      uniqueRestaurants.set(restaurant.externalId, restaurant);
-    }
+  try {
+    data = (await response.json()) as HotpepperResponse;
+  } catch {
+    throw new RestaurantApiError(
+      "Restaurant API returned an invalid response.",
+      "INVALID_API_RESPONSE",
+    );
   }
 
-  const restaurants = [...uniqueRestaurants.values()];
+  if (!response.ok) {
+    throw new RestaurantApiError(
+      data.error?.message || `Restaurant API request failed (${response.status}).`,
+      data.error?.code,
+    );
+  }
+
+  if (!Array.isArray(data.restaurants)) {
+    throw new RestaurantApiError("Restaurant API returned an invalid response.");
+  }
+
+  const restaurants = data.restaurants
+    .map(({ shop, area: shopArea }) => convertShop(shop, shopArea))
+    .filter((restaurant): restaurant is Restaurant => restaurant !== null);
 
   if (restaurants.length === 0) {
-    throw new Error("No restaurants were found for the selected area.");
+    throw new RestaurantApiError(
+      "No restaurants were found for the selected area.",
+      "NO_RESTAURANTS_FOUND",
+    );
   }
 
   return restaurants;

@@ -1,4 +1,5 @@
 import type { Restaurant } from "../types/restaurant";
+import { createFeatureStatuses } from "../utils/features";
 
 export const restaurants: Restaurant[] = [
   {
@@ -10,14 +11,14 @@ export const restaurants: Restaurant[] = [
     description:
       "A casual Japanese restaurant serving set meals and seasonal dishes.",
     imageUrl: "https://placehold.co/600x400?text=Sakura+Dining",
-    features: [
+    featureStatuses: createFeatureStatuses([
       "credit_card",
       "non_smoking",
       "english_guide",
       "wifi",
       "takeout",
       "pork_free",
-    ],
+    ]),
   },
   {
     id: 2,
@@ -28,14 +29,14 @@ export const restaurants: Restaurant[] = [
     description:
       "A traditional soba restaurant with several vegetarian-friendly dishes.",
     imageUrl: "https://placehold.co/600x400?text=Edo+Soba",
-    features: [
+    featureStatuses: createFeatureStatuses([
       "credit_card",
       "non_smoking",
       "english_guide",
       "vegetarian",
       "pork_free",
       "alcohol_free",
-    ],
+    ]),
   },
   {
     id: 3,
@@ -46,7 +47,11 @@ export const restaurants: Restaurant[] = [
     description:
       "A popular ramen restaurant serving rich pork-based ramen.",
     imageUrl: "https://placehold.co/600x400?text=Tokyo+Ramen",
-    features: ["wifi", "takeout", "english_guide"],
+    featureStatuses: createFeatureStatuses([
+      "wifi",
+      "takeout",
+      "english_guide",
+    ]),
   },
   {
     id: 4,
@@ -57,7 +62,7 @@ export const restaurants: Restaurant[] = [
     description:
       "A plant-based cafe offering vegan bowls, desserts and drinks.",
     imageUrl: "https://placehold.co/600x400?text=Green+Bowl",
-    features: [
+    featureStatuses: createFeatureStatuses([
       "credit_card",
       "non_smoking",
       "english_guide",
@@ -67,7 +72,7 @@ export const restaurants: Restaurant[] = [
       "vegan",
       "pork_free",
       "alcohol_free",
-    ],
+    ]),
   },
   {
     id: 5,
@@ -78,11 +83,11 @@ export const restaurants: Restaurant[] = [
     description:
       "A tempura restaurant located near Kaminarimon Gate.",
     imageUrl: "https://placehold.co/600x400?text=Tempura",
-    features: [
+    featureStatuses: createFeatureStatuses([
       "credit_card",
       "non_smoking",
       "takeout",
       "pork_free",
-    ],
+    ]),
   },
 ];

@@ -1,49 +1,76 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "./App.css";
 import { HotpepperAttribution } from "./components/HotpepperAttribution";
 import { PreferenceForm } from "./components/PreferenceForm";
 import { RestaurantCard } from "./components/RestaurantCard";
-import {
-  isDeepLApiConfigured,
-  translateRestaurants,
-} from "./services/deeplApi";
+import { translateRestaurants } from "./services/deeplApi";
 import {
   fetchHotpepperRestaurants,
-  isHotpepperApiConfigured,
-  type SearchArea,
+  RestaurantApiError,
 } from "./services/hotpepperApi";
-import type { RestaurantFeature } from "./types/restaurant";
-import { calculateMatchScore } from "./utils/match";
+import type {
+  RestaurantFeature,
+  SearchArea,
+} from "./types/restaurant";
+import { calculateMatchResult } from "./utils/match";
 import {
   cacheApiRestaurants,
   getSampleRestaurants,
   mergeRestaurantsWithSaved,
 } from "./utils/restaurantStorage";
+import {
+  getAreaFromSearchParams,
+  getFeaturesFromSearchParams,
+} from "./utils/restaurantSearch";
 
 function App() {
-  const hasApiKey = isHotpepperApiConfigured();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [restaurants, setRestaurants] = useState(getSampleRestaurants);
-  const [selectedFeatures, setSelectedFeatures] = useState<
-    RestaurantFeature[]
-  >([]);
-  const [selectedArea, setSelectedArea] = useState<SearchArea>("all");
+  const selectedFeatures = useMemo(
+    () => getFeaturesFromSearchParams(searchParams),
+    [searchParams],
+  );
+  const selectedArea = useMemo(
+    () => getAreaFromSearchParams(searchParams),
+    [searchParams],
+  );
   const [loadingState, setLoadingState] = useState<
     "restaurants" | "translation" | null
-  >(hasApiKey ? "restaurants" : null);
+  >("restaurants");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [isSampleMode, setIsSampleMode] = useState(false);
 
-  useEffect(() => {
-    if (!hasApiKey) {
-      setRestaurants(getSampleRestaurants());
-      setLoadingState(null);
-      setErrorMessage(null);
-      return;
+  const handleAreaChange = (area: SearchArea) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (area === "all") {
+      nextParams.delete("area");
+    } else {
+      nextParams.set("area", area);
     }
 
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const handleFeaturesChange = (features: RestaurantFeature[]) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (features.length === 0) {
+      nextParams.delete("features");
+    } else {
+      nextParams.set("features", features.join(","));
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  useEffect(() => {
     const controller = new AbortController();
     setLoadingState("restaurants");
     setErrorMessage(null);
+    setIsSampleMode(false);
 
     void (async () => {
       try {
@@ -53,18 +80,25 @@ function App() {
         );
         let displayRestaurants = fetchedRestaurants;
 
-        if (isDeepLApiConfigured()) {
-          setLoadingState("translation");
-          displayRestaurants = await translateRestaurants(
-            fetchedRestaurants,
-            controller.signal,
-          );
-        }
+        setLoadingState("translation");
+        displayRestaurants = await translateRestaurants(
+          fetchedRestaurants,
+          controller.signal,
+        );
 
         cacheApiRestaurants(displayRestaurants);
         setRestaurants(mergeRestaurantsWithSaved(displayRestaurants));
       } catch (error: unknown) {
         if (controller.signal.aborted) {
+          return;
+        }
+
+        if (
+          error instanceof RestaurantApiError &&
+          error.code === "HOTPEPPER_API_KEY_MISSING"
+        ) {
+          setRestaurants(getSampleRestaurants());
+          setIsSampleMode(true);
           return;
         }
 
@@ -82,7 +116,7 @@ function App() {
     })();
 
     return () => controller.abort();
-  }, [hasApiKey, retryCount, selectedArea]);
+  }, [retryCount, selectedArea]);
 
   const rankedRestaurants = useMemo(() => {
     return restaurants
@@ -95,9 +129,16 @@ function App() {
       })
       .map((restaurant) => ({
         restaurant,
-        matchScore: calculateMatchScore(restaurant, selectedFeatures),
+        matchResult: calculateMatchResult(restaurant, selectedFeatures),
       }))
-      .sort((a, b) => b.matchScore - a.matchScore);
+      .sort((a, b) => {
+        const scoreDifference =
+          (b.matchResult.score ?? -1) - (a.matchResult.score ?? -1);
+
+        return scoreDifference !== 0
+          ? scoreDifference
+          : b.matchResult.confirmedCount - a.matchResult.confirmedCount;
+      });
   }, [restaurants, selectedFeatures, selectedArea]);
 
   const hasApiRestaurants = rankedRestaurants.some(
@@ -130,7 +171,7 @@ function App() {
           <button
             type="button"
             className={selectedArea === "all" ? "area-button active" : "area-button"}
-            onClick={() => setSelectedArea("all")}
+            onClick={() => handleAreaChange("all")}
           >
             <strong>All Areas</strong>
             <span>すべてのエリア</span>
@@ -138,7 +179,7 @@ function App() {
           <button
             type="button"
             className={selectedArea === "Asakusa" ? "area-button active" : "area-button"}
-            onClick={() => setSelectedArea("Asakusa")}
+            onClick={() => handleAreaChange("Asakusa")}
           >
             <strong>Asakusa</strong>
             <span>浅草</span>
@@ -146,14 +187,14 @@ function App() {
           <button
             type="button"
             className={selectedArea === "Ueno" ? "area-button active" : "area-button"}
-            onClick={() => setSelectedArea("Ueno")}
+            onClick={() => handleAreaChange("Ueno")}
           >
             <strong>Ueno</strong>
             <span>上野</span>
           </button>
         </div>
 
-        {!hasApiKey && (
+        {isSampleMode && (
           <p className="sample-mode-note">
             Sample data mode
             <span>APIキー未設定のためサンプル店舗を表示しています。</span>
@@ -163,7 +204,7 @@ function App() {
 
       <PreferenceForm
         selectedFeatures={selectedFeatures}
-        onChange={setSelectedFeatures}
+        onChange={handleFeaturesChange}
       />
 
       <section className="results-section">
@@ -209,12 +250,12 @@ function App() {
           </div>
         ) : (
           <div className="restaurant-list">
-            {rankedRestaurants.map(({ restaurant, matchScore }) => (
+            {rankedRestaurants.map(({ restaurant, matchResult }) => (
               <RestaurantCard
                 key={restaurant.id}
                 restaurant={restaurant}
                 selectedFeatures={selectedFeatures}
-                matchScore={matchScore}
+                matchResult={matchResult}
               />
             ))}
           </div>
