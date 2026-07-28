@@ -9,6 +9,7 @@ export type EnvironmentStatus = {
   deepLConfigured: boolean;
   supabaseUrlConfigured: boolean;
   supabaseServiceRoleKeyConfigured: boolean;
+  adminEmailsConfigured: boolean;
 };
 
 export function loadServerEnvironment(): EnvironmentStatus {
@@ -26,6 +27,7 @@ export function loadServerEnvironment(): EnvironmentStatus {
     supabaseServiceRoleKeyConfigured: Boolean(
       process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
     ),
+    adminEmailsConfigured: Boolean(process.env.ADMIN_EMAILS?.trim()),
   };
 }
 
@@ -47,6 +49,11 @@ export function logEnvironmentStatus(status: EnvironmentStatus): void {
   console.log(
     `[env] SUPABASE_SERVICE_ROLE_KEY: ${
       status.supabaseServiceRoleKeyConfigured ? "configured" : "missing"
+    }`,
+  );
+  console.log(
+    `[env] ADMIN_EMAILS: ${
+      status.adminEmailsConfigured ? "configured" : "missing"
     }`,
   );
 }

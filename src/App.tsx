@@ -4,6 +4,7 @@ import "./App.css";
 import { HotpepperAttribution } from "./components/HotpepperAttribution";
 import { PreferenceForm } from "./components/PreferenceForm";
 import { RestaurantCard } from "./components/RestaurantCard";
+import { AdminAuthActions } from "./components/AdminAuthActions";
 import { translateRestaurants } from "./services/deeplApi";
 import {
   fetchHotpepperRestaurants,
@@ -158,6 +159,9 @@ function App() {
   return (
     <main>
       <header className="hero">
+        <div className="hero-admin-actions">
+          <AdminAuthActions />
+        </div>
         <p className="eyebrow">TabiMatch Guide</p>
         <h1>Find a restaurant that fits your needs.</h1>
         <p className="hero-ja">あなたの条件に合う日本の飲食店を探す</p>

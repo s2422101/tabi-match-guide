@@ -5,21 +5,31 @@ import './index.css'
 import App from './App.tsx'
 import { RestaurantDetailPage } from './pages/RestaurantDetailPage.tsx'
 import { RestaurantEditPage } from './pages/RestaurantEditPage.tsx'
+import { AdminLoginPage } from './pages/AdminLoginPage.tsx'
+import { AuthProvider } from './auth/AuthContext.tsx'
+import { ProtectedAdminRoute } from './auth/ProtectedAdminRoute.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route
-          path="/restaurants/:restaurantId"
-          element={<RestaurantDetailPage />}
-        />
-        <Route
-          path="/restaurants/:restaurantId/edit"
-          element={<RestaurantEditPage />}
-        />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/restaurants/:restaurantId"
+            element={<RestaurantDetailPage />}
+          />
+          <Route
+            path="/restaurants/:restaurantId/edit"
+            element={
+              <ProtectedAdminRoute>
+                <RestaurantEditPage />
+              </ProtectedAdminRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

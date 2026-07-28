@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import {
   Link,
   useLocation,
@@ -31,6 +31,8 @@ import {
   canNavigateBack,
   getReturnPath,
 } from "../utils/restaurantSearch";
+import { useAuth } from "../auth/useAuth";
+import { AdminAuthActions } from "../components/AdminAuthActions";
 
 const editableFeatures: RestaurantFeature[] = [
   "english_guide",
@@ -51,6 +53,8 @@ const editableStatuses: FeatureStatus[] = [
 ];
 
 export function RestaurantEditPage() {
+  const { getAccessToken, session } = useAuth();
+  const initialAccessToken = useRef(session?.access_token);
   const { restaurantId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -112,7 +116,11 @@ export function RestaurantEditPage() {
     }
 
     setIsLoadingSupport(true);
-    void hydrateRestaurantsWithSupport([baseRestaurant], controller.signal).then(
+    void hydrateRestaurantsWithSupport(
+      [baseRestaurant],
+      controller.signal,
+      initialAccessToken.current,
+    ).then(
       ([hydratedRestaurant]) => {
         if (controller.signal.aborted || !hydratedRestaurant) {
           return;
@@ -184,12 +192,20 @@ export function RestaurantEditPage() {
     setSaveError(null);
 
     try {
-      await saveRestaurantSupport({
-        ...restaurant,
-        nameEn: nameEn.trim(),
-        nameJa: nameJa.trim(),
-        featureStatuses,
-      });
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error("Your administrator session has expired. Please log in again.");
+      }
+
+      await saveRestaurantSupport(
+        {
+          ...restaurant,
+          nameEn: nameEn.trim(),
+          nameJa: nameJa.trim(),
+          featureStatuses,
+        },
+        accessToken,
+      );
       setSaveState("success");
       window.setTimeout(() => navigate(detailPath, { replace: true }), 500);
     } catch (error: unknown) {
@@ -203,6 +219,9 @@ export function RestaurantEditPage() {
   return (
     <main className="edit-page">
       <section className="edit-panel">
+        <div className="edit-admin-actions">
+          <AdminAuthActions />
+        </div>
         <button
           type="button"
           className="back-link edit-back-button"

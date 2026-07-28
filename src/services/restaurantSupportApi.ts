@@ -111,12 +111,16 @@ export async function fetchRestaurantSupport(
 
 export async function saveRestaurantSupport(
   restaurant: Restaurant,
+  accessToken: string,
   signal?: AbortSignal,
 ): Promise<RestaurantSupportRecord> {
   const restaurantId = encodeURIComponent(getRestaurantSupportId(restaurant));
   const response = await fetch(`/api/restaurants/${restaurantId}/support`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       name_en: restaurant.nameEn,
       name_ja: restaurant.nameJa,
@@ -133,7 +137,10 @@ export async function saveRestaurantSupport(
   return data.support;
 }
 
-async function migrateLegacyRestaurantEdits(signal?: AbortSignal): Promise<void> {
+async function migrateLegacyRestaurantEdits(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<void> {
   const legacyRestaurants = getLegacyRestaurantEdits();
 
   if (legacyRestaurants.length === 0) {
@@ -141,7 +148,9 @@ async function migrateLegacyRestaurantEdits(signal?: AbortSignal): Promise<void>
   }
 
   await Promise.all(
-    legacyRestaurants.map((restaurant) => saveRestaurantSupport(restaurant, signal)),
+    legacyRestaurants.map((restaurant) =>
+      saveRestaurantSupport(restaurant, accessToken, signal),
+    ),
   );
   clearLegacyRestaurantEdits();
 }
@@ -149,11 +158,14 @@ async function migrateLegacyRestaurantEdits(signal?: AbortSignal): Promise<void>
 export async function hydrateRestaurantsWithSupport(
   restaurants: Restaurant[],
   signal?: AbortSignal,
+  accessToken?: string,
 ): Promise<Restaurant[]> {
-  try {
-    await migrateLegacyRestaurantEdits(signal);
-  } catch {
-    // Keep old localStorage edits as a read fallback and retry next time.
+  if (accessToken) {
+    try {
+      await migrateLegacyRestaurantEdits(accessToken, signal);
+    } catch {
+      // Keep old localStorage edits as a read fallback and retry next time.
+    }
   }
 
   return Promise.all(

@@ -9,6 +9,8 @@ import {
 import { FeatureStatusItem } from "../components/FeatureStatusItem";
 import { HotpepperAttribution } from "../components/HotpepperAttribution";
 import { MatchSummary } from "../components/MatchSummary";
+import { AdminAuthActions } from "../components/AdminAuthActions";
+import { useAuth } from "../auth/useAuth";
 import { getFeatureStatus } from "../utils/features";
 import { calculateMatchResult } from "../utils/match";
 import { getRestaurants } from "../utils/restaurantStorage";
@@ -26,6 +28,7 @@ import {
 } from "../utils/restaurantSearch";
 
 export function RestaurantDetailPage() {
+  const { isAdmin } = useAuth();
   const { restaurantId } = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -125,6 +128,7 @@ export function RestaurantDetailPage() {
           <strong>Back to restaurant list</strong>
           <span>店舗一覧へ戻る</span>
         </button>
+        <AdminAuthActions />
       </nav>
 
       <section className="detail-hero">
@@ -146,14 +150,16 @@ export function RestaurantDetailPage() {
             <MatchSummary result={matchResult} />
           </div>
 
-          <Link
-            to={editPath}
-            state={editReturnState}
-            className="edit-button"
-          >
-            Edit restaurant information
-            <span>店舗情報を編集</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              to={editPath}
+              state={editReturnState}
+              className="edit-button"
+            >
+              Edit restaurant information
+              <span>店舗情報を編集</span>
+            </Link>
+          )}
         </div>
       </section>
 

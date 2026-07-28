@@ -1,4 +1,4 @@
-export type ApiErrorStatus = 400 | 404 | 500 | 502 | 503 | 504;
+export type ApiErrorStatus = 400 | 401 | 403 | 404 | 500 | 502 | 503 | 504;
 
 export class ApiError extends Error {
   readonly code: string;

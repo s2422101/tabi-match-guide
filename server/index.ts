@@ -2,6 +2,11 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { validator } from "hono/validator";
+import {
+  isAdminEmail,
+  requireAdminUser,
+  requireAuthenticatedUser,
+} from "./auth.js";
 import { translateTexts } from "./deepl.js";
 import { loadServerEnvironment, logEnvironmentStatus } from "./env.js";
 import { ApiError, errorBody } from "./errors.js";
@@ -28,7 +33,7 @@ app.use(
   "/api/*",
   cors({
     origin: allowedOrigins,
-    allowHeaders: ["Content-Type"],
+    allowHeaders: ["Authorization", "Content-Type"],
     allowMethods: ["GET", "POST", "PUT", "OPTIONS"],
     maxAge: 600,
   }),
@@ -105,7 +110,17 @@ app.get("/api/restaurants/:restaurantId/support", async (c) => {
   return c.json({ support });
 });
 
+app.get("/api/auth/me", async (c) => {
+  const user = await requireAuthenticatedUser(c.req.header("Authorization"));
+  return c.json({
+    user: { email: user.email ?? null },
+    is_admin: isAdminEmail(user.email),
+  });
+});
+
 app.put("/api/restaurants/:restaurantId/support", async (c) => {
+  await requireAdminUser(c.req.header("Authorization"));
+
   let body: unknown;
 
   try {

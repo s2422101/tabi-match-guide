@@ -21,6 +21,7 @@ main {
 }
 
 .hero {
+  position: relative;
   padding: 72px 24px 56px;
   text-align: center;
   background:
@@ -570,6 +571,9 @@ main {
 
 .detail-top-navigation {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   padding: 18px 24px;
   border-bottom: 1px solid #e2e8e5;
   background: white;
@@ -1203,7 +1207,170 @@ main {
   color: #9b4435;
 }
 
+.hero-admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: min(1040px, 100%);
+  margin: -48px auto 24px;
+}
+
+.admin-auth-link,
+.admin-auth-signed-in button {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+  padding: 9px 14px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.admin-auth-link span,
+.admin-auth-signed-in button span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.78;
+}
+
+.admin-auth-signed-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-auth-signed-in small,
+.admin-auth-loading {
+  color: #73807c;
+  font-size: 0.72rem;
+}
+
+.hero .admin-auth-signed-in small,
+.hero .admin-auth-loading {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.detail-top-navigation .admin-auth-link,
+.detail-top-navigation .admin-auth-signed-in button,
+.edit-admin-actions .admin-auth-signed-in button {
+  color: #126b5a;
+}
+
+.edit-admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 48px 16px;
+  background: #f5f6f8;
+}
+
+.auth-panel {
+  width: min(520px, 100%);
+  border-radius: 22px;
+  padding: 42px;
+  background: white;
+  box-shadow: 0 14px 45px rgba(18, 38, 32, 0.1);
+  text-align: left;
+}
+
+.auth-panel h1 {
+  margin: 10px 0 0;
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1.1;
+}
+
+.auth-description {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 24px;
+  color: #52605c;
+  line-height: 1.6;
+}
+
+.auth-description span {
+  color: #7a8582;
+  font-size: 0.76rem;
+}
+
+.auth-form {
+  display: grid;
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.auth-submit {
+  width: 100%;
+  align-items: center;
+}
+
+.auth-error {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 12px;
+  padding: 13px 15px;
+  background: #fff4f1;
+  color: #9b4435;
+}
+
+.auth-error span,
+.auth-error small {
+  font-size: 0.72rem;
+}
+
+.auth-back-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 26px 0 0;
+}
+
+.auth-back-link span,
+.auth-status span {
+  font-size: 0.7rem;
+}
+
+.auth-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #52605c;
+}
+
 @media (max-width: 760px) {
+  .hero-admin-actions {
+    margin-top: -52px;
+  }
+
+  .detail-top-navigation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-top-navigation .admin-auth-link,
+  .detail-top-navigation .admin-auth-signed-in button {
+    width: 100%;
+  }
+
+  .admin-auth-signed-in {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .auth-panel {
+    padding: 30px 22px;
+  }
+
   .restaurant-heading {
     flex-direction: column;
   }

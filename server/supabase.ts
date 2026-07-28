@@ -94,3 +94,39 @@ export async function upsertRestaurantSupport(
 
   return data;
 }
+
+export type AuthenticatedUser = {
+  id: string;
+  email?: string;
+};
+
+export async function getAuthenticatedUser(
+  accessToken: string,
+): Promise<AuthenticatedUser> {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await getSupabaseClient().auth.getUser(accessToken);
+
+    if (error || !user) {
+      throw new ApiError(
+        401,
+        "AUTHENTICATION_REQUIRED",
+        "A valid administrator session is required.",
+      );
+    }
+
+    return { id: user.id, email: user.email };
+  } catch (error: unknown) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
+    throw new ApiError(
+      401,
+      "AUTHENTICATION_REQUIRED",
+      "A valid administrator session is required.",
+    );
+  }
+}

@@ -17,6 +17,8 @@ cd /path/to/tabi-match-guide
 - `POST /api/translate`
 - `GET /api/restaurants/:restaurantId/support`
 - `PUT /api/restaurants/:restaurantId/support`
+- `GET /api/auth/me`
+- 管理者ログイン: `/admin/login`
 
 ## セットアップ
 
@@ -34,13 +36,25 @@ HOTPEPPER_API_KEY=your_hotpepper_api_key_here
 DEEPL_API_KEY=your_deepl_api_key_here
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+ADMIN_EMAILS=admin@example.com
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 CORS_ORIGIN=http://localhost:5173
 API_TIMEOUT_MS=10000
 ```
 
-環境変数に`VITE_`を付けないでください。APIキーはHonoサーバーのみが参照します。
+Hot Pepper、DeepL、Service Roleの各キーには`VITE_`を付けないでください。これらはHonoサーバーのみが参照します。
 DeepL API Freeのキーは末尾の`:fx`から自動判定されます。
 SupabaseのService Roleキーは強い権限を持つため、フロントエンドへ公開せず、`VITE_`も付けないでください。
+`VITE_SUPABASE_ANON_KEY`はブラウザー用のanon keyです。Service Roleキーとは異なり、公開されることを前提としたキーです。
+
+`ADMIN_EMAILS`には、更新を許可するSupabase Authユーザーのメールアドレスをカンマ区切りで指定します。比較時は前後の空白と大文字小文字を無視します。未設定の場合、すべてのPUTが403になります。
+
+## 管理者ユーザー
+
+Supabase Dashboardの「Authentication」→「Users」から「Add user」を選び、メールアドレスと十分に強いパスワードを設定します。そのメールアドレスを`ADMIN_EMAILS`にも追加し、Honoサーバーを再起動してください。一般利用者向けのサインアップ画面は実装していません。
+
+Supabase Dashboardの「Authentication」→「Sign In / Providers」でEmail providerが有効になっていることも確認してください。
 
 ## Supabaseテーブル
 
@@ -63,7 +77,7 @@ revoke all on table public.restaurant_support from anon, authenticated;
 grant select, insert, update on table public.restaurant_support to service_role;
 ```
 
-HonoがService Roleキーでアクセスするため、`anon`や`authenticated`向けのRLSポリシーは作成しません。APIをインターネットへ公開する場合は、Hono側にも認証・認可とレート制限を追加してください。
+HonoがService Roleキーでアクセスするため、`anon`や`authenticated`向けのRLSポリシーは作成しません。PUTではHonoがSupabase Authのaccess tokenと`ADMIN_EMAILS`を検証します。本番公開時は、ログイン試行と更新APIへのレート制限、監査ログも追加してください。
 
 ## 起動
 
@@ -111,13 +125,14 @@ curl -X POST "http://localhost:3000/api/translate" \
 curl "http://localhost:3000/api/restaurants/J001234567/support"
 
 curl -X PUT "http://localhost:3000/api/restaurants/J001234567/support" \
+  -H "Authorization: Bearer YOUR_SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name_en":"Example Restaurant","name_ja":"サンプル店舗","feature_statuses":{"credit_card":"supported","vegan":"unknown"}}'
 ```
 
-GETは未登録の場合に`{"support":null}`を返します。PUTはupsertしたレコードを`support`として返します。エラーは共通して`{"error":{"code":"...","message":"..."}}`形式です。
+GETは未登録の場合に`{"support":null}`を返します。PUTは管理者のBearer tokenが必要で、upsertしたレコードを`support`として返します。トークンなし・無効・期限切れは401、認証済みでも`ADMIN_EMAILS`に含まれない場合は403です。エラーは共通して`{"error":{"code":"...","message":"..."}}`形式です。
 
-以前の`tabi-match-guide:restaurants` localStorageデータがある場合、画面表示時に全件をSupabaseへupsertします。全件成功後に旧データを削除し、失敗時は削除せず表示のフォールバックとして保持します。翻訳キャッシュとホットペッパー基本情報の画面遷移用キャッシュは引き続きlocalStorageを使用します。
+以前の`tabi-match-guide:restaurants` localStorageデータがある場合、管理者が編集画面を開いたときに全件をSupabaseへupsertします。全件成功後に旧データを削除し、失敗時は削除せず表示のフォールバックとして保持します。翻訳キャッシュとホットペッパー基本情報の画面遷移用キャッシュは引き続きlocalStorageを使用します。
 
 APIキー未設定時、店舗一覧は既存のサンプルデータへフォールバックします。翻訳に失敗した場合は、localStorageのキャッシュまたは日本語原文を表示します。
 
