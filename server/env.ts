@@ -10,6 +10,7 @@ export type EnvironmentStatus = {
   supabaseUrlConfigured: boolean;
   supabaseServiceRoleKeyConfigured: boolean;
   adminEmailsConfigured: boolean;
+  frontendOriginsConfigured: boolean;
 };
 
 export function loadServerEnvironment(): EnvironmentStatus {
@@ -28,6 +29,7 @@ export function loadServerEnvironment(): EnvironmentStatus {
       process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
     ),
     adminEmailsConfigured: Boolean(process.env.ADMIN_EMAILS?.trim()),
+    frontendOriginsConfigured: Boolean(process.env.FRONTEND_ORIGINS?.trim()),
   };
 }
 
@@ -54,6 +56,11 @@ export function logEnvironmentStatus(status: EnvironmentStatus): void {
   console.log(
     `[env] ADMIN_EMAILS: ${
       status.adminEmailsConfigured ? "configured" : "missing"
+    }`,
+  );
+  console.log(
+    `[env] FRONTEND_ORIGINS: ${
+      status.frontendOriginsConfigured ? "configured" : "missing (localhost only)"
     }`,
   );
 }

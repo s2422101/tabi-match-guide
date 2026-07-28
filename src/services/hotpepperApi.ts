@@ -4,6 +4,7 @@ import type {
   SearchArea,
 } from "../types/restaurant";
 import { createUnknownFeatureStatuses } from "../utils/features";
+import { getApiUrl } from "./apiUrl";
 
 type HotpepperShop = {
   id?: string;
@@ -34,7 +35,7 @@ type HotpepperResponse = {
   };
 };
 
-const apiEndpoint = "/api/restaurants";
+const apiEndpoint = getApiUrl("/api/restaurants");
 
 export class RestaurantApiError extends Error {
   readonly code?: string;

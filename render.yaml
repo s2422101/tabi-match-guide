@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: tabi-match-guide-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build:server
+    startCommand: npm start
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: API_TIMEOUT_MS
+        value: 10000
+      - key: HOTPEPPER_API_KEY
+        sync: false
+      - key: DEEPL_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: FRONTEND_ORIGINS
+        sync: false

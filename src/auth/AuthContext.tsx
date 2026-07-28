@@ -10,9 +10,10 @@ import {
   getBrowserSupabaseClient,
 } from "../services/supabaseAuth";
 import { AuthContext } from "./authContextValue";
+import { getApiUrl } from "../services/apiUrl";
 
 async function verifyAdminSession(session: Session): Promise<boolean> {
-  const response = await fetch("/api/auth/me", {
+  const response = await fetch(getApiUrl("/api/auth/me"), {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
 

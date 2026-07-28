@@ -22,12 +22,29 @@ import {
 
 const environmentStatus = loadServerEnvironment();
 const app = new Hono();
-const port = 3000;
+const configuredPort = Number(process.env.PORT);
+const port =
+  Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65_535
+    ? configuredPort
+    : 3000;
 const validAreas: SearchArea[] = ["all", "Asakusa", "Ueno"];
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+const defaultFrontendOrigin = "http://localhost:5173";
+const configuredOrigins = (process.env.FRONTEND_ORIGINS || defaultFrontendOrigin)
   .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter((origin) => {
+    try {
+      const url = new URL(origin);
+      return (
+        (url.protocol === "http:" || url.protocol === "https:") &&
+        url.origin === origin
+      );
+    } catch {
+      return false;
+    }
+  });
+const allowedOrigins =
+  configuredOrigins.length > 0 ? configuredOrigins : [defaultFrontendOrigin];
 
 app.use(
   "/api/*",
@@ -156,12 +173,12 @@ app.onError((error, c) => {
 const server = serve(
   {
     fetch: app.fetch,
-    hostname: "localhost",
+    hostname: "0.0.0.0",
     port,
   },
   (info) => {
     logEnvironmentStatus(environmentStatus);
-    console.log(`API server is running on http://localhost:${info.port}`);
+    console.log(`API server is listening on port ${info.port}`);
   },
 );
 

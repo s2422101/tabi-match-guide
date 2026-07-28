@@ -9,6 +9,7 @@ import {
   clearLegacyRestaurantEdits,
   getLegacyRestaurantEdits,
 } from "../utils/restaurantStorage";
+import { getApiUrl } from "./apiUrl";
 
 type RestaurantSupportRecord = {
   restaurant_id: string;
@@ -102,9 +103,12 @@ export async function fetchRestaurantSupport(
   signal?: AbortSignal,
 ): Promise<RestaurantSupportRecord | null> {
   const restaurantId = encodeURIComponent(getRestaurantSupportId(restaurant));
-  const response = await fetch(`/api/restaurants/${restaurantId}/support`, {
-    signal,
-  });
+  const response = await fetch(
+    getApiUrl(`/api/restaurants/${restaurantId}/support`),
+    {
+      signal,
+    },
+  );
   const data = await readResponse(response);
   return data.support ?? null;
 }
@@ -115,19 +119,22 @@ export async function saveRestaurantSupport(
   signal?: AbortSignal,
 ): Promise<RestaurantSupportRecord> {
   const restaurantId = encodeURIComponent(getRestaurantSupportId(restaurant));
-  const response = await fetch(`/api/restaurants/${restaurantId}/support`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    getApiUrl(`/api/restaurants/${restaurantId}/support`),
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name_en: restaurant.nameEn,
+        name_ja: restaurant.nameJa,
+        feature_statuses: restaurant.featureStatuses,
+      }),
+      signal,
     },
-    body: JSON.stringify({
-      name_en: restaurant.nameEn,
-      name_ja: restaurant.nameJa,
-      feature_statuses: restaurant.featureStatuses,
-    }),
-    signal,
-  });
+  );
   const data = await readResponse(response);
 
   if (!data.support) {

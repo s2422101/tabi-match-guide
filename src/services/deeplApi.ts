@@ -1,4 +1,5 @@
 import type { Restaurant } from "../types/restaurant";
+import { getApiUrl } from "./apiUrl";
 
 type DeepLResponse = {
   translations?: Array<{
@@ -18,7 +19,7 @@ type TranslatableRestaurantFields = {
   budget?: string;
 };
 
-const apiEndpoint = "/api/translate";
+const apiEndpoint = getApiUrl("/api/translate");
 const cacheKey = "tabi-match-guide:deepl-translations:en-us";
 const maximumTextsPerRequest = 50;
 

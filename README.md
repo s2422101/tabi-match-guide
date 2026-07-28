@@ -22,7 +22,7 @@ cd /path/to/tabi-match-guide
 
 ## セットアップ
 
-Node.js 20以降を推奨します。
+Node.js 24を使用します（`.nvmrc`と`package.json`で指定）。
 
 ```bash
 npm install
@@ -39,7 +39,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
 ADMIN_EMAILS=admin@example.com
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-CORS_ORIGIN=http://localhost:5173
+VITE_API_BASE_URL=http://localhost:3000
+FRONTEND_ORIGINS=http://localhost:5173,https://your-app.vercel.app
 API_TIMEOUT_MS=10000
 ```
 
@@ -138,4 +139,4 @@ APIキー未設定時、店舗一覧は既存のサンプルデータへフォ�
 
 ## 本番環境について
 
-Viteの`/api` proxyは開発用です。本番ではリバースプロキシやホスティング設定で、フロントエンドの`/api`をHonoバックエンドへ転送してください。`.env`はGitへコミットしないでください。
+推奨構成はVercel（フロントエンド）＋Render（Hono API）です。比較、環境変数、デプロイ手順、公開後の確認項目は[DEPLOYMENT.md](./DEPLOYMENT.md)を参照してください。開発時は`VITE_API_BASE_URL`を空にすればViteの`/api` proxyを使用でき、`http://localhost:3000`を指定すればHonoへ直接接続できます。`.env`はGitへコミットしないでください。
