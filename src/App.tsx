@@ -47,21 +47,17 @@ function App() {
   const [retryCount, setRetryCount] = useState(0);
   const [isSampleMode, setIsSampleMode] = useState(false);
   const [areFiltersOpen, setAreFiltersOpen] = useState(false);
+  const [draftArea, setDraftArea] = useState<SearchArea>(selectedArea);
+  const [draftFeatures, setDraftFeatures] = useState<RestaurantFeature[]>(
+    selectedFeatures,
+  );
   const resultsRef = useRef<HTMLElement>(null);
   const shouldScrollToResultsRef = useRef(false);
 
-  const closeFiltersAndPrepareResultsScroll = () => {
-    if (window.matchMedia("(max-width: 760px)").matches) {
-      setAreFiltersOpen(false);
-      shouldScrollToResultsRef.current = true;
-    }
-  };
-
-  const handleAreaChange = (area: SearchArea) => {
-    if (area === selectedArea) {
-      return;
-    }
-
+  const updateSearchParams = (
+    area: SearchArea,
+    features: RestaurantFeature[],
+  ) => {
     const nextParams = new URLSearchParams(searchParams);
 
     if (area === "all") {
@@ -70,23 +66,88 @@ function App() {
       nextParams.set("area", area);
     }
 
-    closeFiltersAndPrepareResultsScroll();
-    setLoadingState("restaurants");
-    setSearchParams(nextParams, { replace: true });
-  };
-
-  const handleFeaturesChange = (features: RestaurantFeature[]) => {
-    const nextParams = new URLSearchParams(searchParams);
-
     if (features.length === 0) {
       nextParams.delete("features");
     } else {
       nextParams.set("features", features.join(","));
     }
 
-    closeFiltersAndPrepareResultsScroll();
     setSearchParams(nextParams, { replace: true });
   };
+
+  const handleAreaChange = (area: SearchArea) => {
+    if (
+      areFiltersOpen &&
+      window.matchMedia("(max-width: 760px)").matches
+    ) {
+      setDraftArea(area);
+      return;
+    }
+
+    if (area === selectedArea) {
+      return;
+    }
+
+    setLoadingState("restaurants");
+    updateSearchParams(area, selectedFeatures);
+  };
+
+  const handleFeaturesChange = (features: RestaurantFeature[]) => {
+    if (
+      areFiltersOpen &&
+      window.matchMedia("(max-width: 760px)").matches
+    ) {
+      setDraftFeatures(features);
+      return;
+    }
+
+    updateSearchParams(selectedArea, features);
+  };
+
+  const openOrDiscardFilters = () => {
+    if (areFiltersOpen) {
+      setDraftArea(selectedArea);
+      setDraftFeatures(selectedFeatures);
+      setAreFiltersOpen(false);
+      return;
+    }
+
+    setDraftArea(selectedArea);
+    setDraftFeatures(selectedFeatures);
+    setAreFiltersOpen(true);
+  };
+
+  const handleApplyFilters = () => {
+    shouldScrollToResultsRef.current = true;
+
+    if (draftArea !== selectedArea) {
+      setLoadingState("restaurants");
+    }
+
+    updateSearchParams(draftArea, draftFeatures);
+    setAreFiltersOpen(false);
+  };
+
+  const handleDiscardFilters = () => {
+    setDraftArea(selectedArea);
+    setDraftFeatures(selectedFeatures);
+    setAreFiltersOpen(false);
+  };
+
+  useEffect(() => {
+    const mobileMedia = window.matchMedia("(max-width: 760px)");
+    const discardDraftOnDesktop = (event: MediaQueryListEvent) => {
+      if (!event.matches) {
+        setAreFiltersOpen(false);
+      }
+    };
+
+    mobileMedia.addEventListener("change", discardDraftOnDesktop);
+
+    return () => {
+      mobileMedia.removeEventListener("change", discardDraftOnDesktop);
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -163,7 +224,7 @@ function App() {
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [errorMessage, loadingState, selectedFeatures]);
+  }, [areFiltersOpen, errorMessage, loadingState, selectedFeatures]);
 
   const rankedRestaurants = useMemo(() => {
     return restaurants
@@ -191,9 +252,11 @@ function App() {
   const hasApiRestaurants = rankedRestaurants.some(
     ({ restaurant }) => restaurant.isApiRestaurant,
   );
-  const areaSummary = selectedArea === "all" ? "All Areas" : selectedArea;
+  const summaryArea = areFiltersOpen ? draftArea : selectedArea;
+  const summaryFeatures = areFiltersOpen ? draftFeatures : selectedFeatures;
+  const areaSummary = summaryArea === "all" ? "All Areas" : summaryArea;
   const selectedFeatureLabels = preferenceOptions
-    .filter(({ id }) => selectedFeatures.includes(id))
+    .filter(({ id }) => summaryFeatures.includes(id))
     .map(({ labelEn }) => labelEn);
   const filterSummary = selectedFeatureLabels.length > 0
     ? `${areaSummary} · ${selectedFeatureLabels.join(", ")}`
@@ -223,7 +286,7 @@ function App() {
         <button
           type="button"
           className="filters-toggle"
-          onClick={() => setAreFiltersOpen((isOpen) => !isOpen)}
+          onClick={openOrDiscardFilters}
           aria-expanded={areFiltersOpen}
           aria-controls="restaurant-search-filters"
         >
@@ -233,7 +296,7 @@ function App() {
               <small>検索条件を変更</small>
             </span>
             <span className="filters-count">
-              {selectedFeatures.length} selected
+              {summaryFeatures.length} selected
             </span>
             <span className="filters-chevron" aria-hidden="true">
               {areFiltersOpen ? "−" : "+"}
@@ -257,7 +320,7 @@ function App() {
         <div className="area-buttons">
           <button
             type="button"
-            className={selectedArea === "all" ? "area-button active" : "area-button"}
+            className={summaryArea === "all" ? "area-button active" : "area-button"}
             onClick={() => handleAreaChange("all")}
           >
             <strong>All Areas</strong>
@@ -265,7 +328,7 @@ function App() {
           </button>
           <button
             type="button"
-            className={selectedArea === "Asakusa" ? "area-button active" : "area-button"}
+            className={summaryArea === "Asakusa" ? "area-button active" : "area-button"}
             onClick={() => handleAreaChange("Asakusa")}
           >
             <strong>Asakusa</strong>
@@ -273,7 +336,7 @@ function App() {
           </button>
           <button
             type="button"
-            className={selectedArea === "Ueno" ? "area-button active" : "area-button"}
+            className={summaryArea === "Ueno" ? "area-button active" : "area-button"}
             onClick={() => handleAreaChange("Ueno")}
           >
             <strong>Ueno</strong>
@@ -290,9 +353,28 @@ function App() {
           </section>
 
           <PreferenceForm
-            selectedFeatures={selectedFeatures}
+            selectedFeatures={summaryFeatures}
             onChange={handleFeaturesChange}
           />
+
+          <div className="mobile-filter-actions">
+            <button
+              type="button"
+              className="apply-filters-button"
+              onClick={handleApplyFilters}
+            >
+              <strong>Apply filters</strong>
+              <span>この条件で絞り込む</span>
+            </button>
+            <button
+              type="button"
+              className="discard-filters-button"
+              onClick={handleDiscardFilters}
+            >
+              <strong>Cancel</strong>
+              <span>変更を破棄</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -339,7 +421,6 @@ function App() {
             <button
               type="button"
               onClick={() => {
-                closeFiltersAndPrepareResultsScroll();
                 setLoadingState("restaurants");
                 setRetryCount((count) => count + 1);
               }}
