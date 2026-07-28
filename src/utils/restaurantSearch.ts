@@ -1,10 +1,12 @@
 import type {
   RestaurantFeature,
+  RestaurantSort,
   SearchArea,
 } from "../types/restaurant";
 import { restaurantFeatures } from "./features";
 
 const validAreas: SearchArea[] = ["all", "Asakusa", "Ueno"];
+const validSorts: RestaurantSort[] = ["match", "budget"];
 
 export type ReturnNavigationState = {
   from: string;
@@ -31,6 +33,15 @@ export function getFeaturesFromSearchParams(
     .filter((feature): feature is RestaurantFeature =>
       restaurantFeatures.includes(feature as RestaurantFeature),
     );
+}
+
+export function getSortFromSearchParams(
+  searchParams: URLSearchParams,
+): RestaurantSort {
+  const sort = searchParams.get("sort");
+  return validSorts.includes(sort as RestaurantSort)
+    ? (sort as RestaurantSort)
+    : "match";
 }
 
 export function getListPath(searchParams: URLSearchParams): string {

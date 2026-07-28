@@ -16,6 +16,7 @@ import {
 import { hydrateRestaurantsWithSupport } from "./services/restaurantSupportApi";
 import type {
   RestaurantFeature,
+  RestaurantSort,
   SearchArea,
 } from "./types/restaurant";
 import { calculateMatchResult } from "./utils/match";
@@ -26,8 +27,10 @@ import {
 import {
   getAreaFromSearchParams,
   getFeaturesFromSearchParams,
+  getSortFromSearchParams,
 } from "./utils/restaurantSearch";
 import { getRestaurantCanonicalId } from "./utils/restaurantId";
+import { sortRestaurantResults } from "./utils/restaurantSort";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,6 +41,10 @@ function App() {
   );
   const selectedArea = useMemo(
     () => getAreaFromSearchParams(searchParams),
+    [searchParams],
+  );
+  const selectedSort = useMemo(
+    () => getSortFromSearchParams(searchParams),
     [searchParams],
   );
   const [loadingState, setLoadingState] = useState<
@@ -102,6 +109,12 @@ function App() {
     }
 
     updateSearchParams(selectedArea, features);
+  };
+
+  const handleSortChange = (sort: RestaurantSort) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("sort", sort);
+    setSearchParams(nextParams, { replace: true });
   };
 
   const openOrDiscardFilters = () => {
@@ -226,7 +239,7 @@ function App() {
     return () => window.cancelAnimationFrame(frameId);
   }, [areFiltersOpen, errorMessage, loadingState, selectedFeatures]);
 
-  const rankedRestaurants = useMemo(() => {
+  const restaurantResults = useMemo(() => {
     return restaurants
       .filter((restaurant) => {
         if (selectedArea === "all") {
@@ -238,18 +251,15 @@ function App() {
       .map((restaurant) => ({
         restaurant,
         matchResult: calculateMatchResult(restaurant, selectedFeatures),
-      }))
-      .sort((a, b) => {
-        const scoreDifference =
-          (b.matchResult.score ?? -1) - (a.matchResult.score ?? -1);
-
-        return scoreDifference !== 0
-          ? scoreDifference
-          : b.matchResult.confirmedCount - a.matchResult.confirmedCount;
-      });
+      }));
   }, [restaurants, selectedFeatures, selectedArea]);
 
-  const hasApiRestaurants = rankedRestaurants.some(
+  const sortedRestaurants = useMemo(
+    () => sortRestaurantResults(restaurantResults, selectedSort),
+    [restaurantResults, selectedSort],
+  );
+
+  const hasApiRestaurants = sortedRestaurants.some(
     ({ restaurant }) => restaurant.isApiRestaurant,
   );
   const summaryArea = areFiltersOpen ? draftArea : selectedArea;
@@ -386,14 +396,33 @@ function App() {
             <p className="section-title-ja">おすすめの飲食店</p>
           </div>
 
-          {!loadingState && !errorMessage && (
-            <p className="result-count">
-              {rankedRestaurants.length} restaurants found
-              <span className="result-count-ja">
-                {rankedRestaurants.length}件の飲食店
+          <div className="results-controls">
+            <label className="sort-control">
+              <span className="sort-label">
+                <strong>Sort results</strong>
+                <small>表示順</small>
               </span>
-            </p>
-          )}
+              <select
+                value={selectedSort}
+                onChange={(event) =>
+                  handleSortChange(event.target.value as RestaurantSort)
+                }
+                disabled={Boolean(loadingState || errorMessage)}
+              >
+                <option value="match">Best match / マッチ率が高い順</option>
+                <option value="budget">Lowest budget / 予算が安い順</option>
+              </select>
+            </label>
+
+            {!loadingState && !errorMessage && (
+              <p className="result-count">
+                {sortedRestaurants.length} restaurants found
+                <span className="result-count-ja">
+                  {sortedRestaurants.length}件の飲食店
+                </span>
+              </p>
+            )}
+          </div>
         </div>
 
         {loadingState ? (
@@ -429,14 +458,14 @@ function App() {
               <span>再試行</span>
             </button>
           </div>
-        ) : rankedRestaurants.length === 0 ? (
+        ) : sortedRestaurants.length === 0 ? (
           <div className="results-status" aria-live="polite">
             <strong>No restaurants found.</strong>
             <span>条件に合う店舗が見つかりませんでした。</span>
           </div>
         ) : (
           <div className="restaurant-list">
-            {rankedRestaurants.map(({ restaurant, matchResult }) => (
+            {sortedRestaurants.map(({ restaurant, matchResult }) => (
               <RestaurantCard
                 key={getRestaurantCanonicalId(restaurant)}
                 restaurant={restaurant}

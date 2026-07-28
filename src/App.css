@@ -128,6 +128,62 @@ main {
   color: #64706d;
 }
 
+.results-controls {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.sort-control {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  text-align: left;
+}
+
+.sort-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sort-label strong {
+  font-size: 0.82rem;
+}
+
+.sort-label small {
+  color: #73807c;
+  font-size: 0.68rem;
+}
+
+.sort-control select {
+  min-height: 44px;
+  border: 1px solid #cfd9d5;
+  border-radius: 12px;
+  padding: 9px 36px 9px 12px;
+  background: white;
+  color: #17202a;
+  cursor: pointer;
+  font: inherit;
+}
+
+.sort-control select:focus-visible {
+  border-color: #167c68;
+  outline: 3px solid rgba(22, 124, 104, 0.16);
+}
+
+.sort-control select:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.result-count {
+  color: #64706d;
+  text-align: right;
+}
+
 .restaurant-list {
   display: grid;
   gap: 20px;
@@ -783,6 +839,26 @@ main {
   .results-heading {
     gap: 10px;
     margin-bottom: 16px;
+  }
+
+  .results-controls,
+  .sort-control {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .sort-control {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sort-control select {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .result-count {
+    text-align: left;
   }
 
   .restaurant-content {
