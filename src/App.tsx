@@ -23,6 +23,7 @@ import {
   getAreaFromSearchParams,
   getFeaturesFromSearchParams,
 } from "./utils/restaurantSearch";
+import { getRestaurantCanonicalId } from "./utils/restaurantId";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -265,7 +266,7 @@ function App() {
           <div className="restaurant-list">
             {rankedRestaurants.map(({ restaurant, matchResult }) => (
               <RestaurantCard
-                key={restaurant.id}
+                key={getRestaurantCanonicalId(restaurant)}
                 restaurant={restaurant}
                 selectedFeatures={selectedFeatures}
                 matchResult={matchResult}

@@ -14,6 +14,10 @@ import { calculateMatchResult } from "../utils/match";
 import { getRestaurants } from "../utils/restaurantStorage";
 import { hydrateRestaurantsWithSupport } from "../services/restaurantSupportApi";
 import {
+  findRestaurantByRouteId,
+  getRestaurantCanonicalId,
+} from "../utils/restaurantId";
+import {
   canNavigateBack,
   getFeaturesFromSearchParams,
   getListPath,
@@ -27,19 +31,28 @@ export function RestaurantDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(() =>
-    getRestaurants().find((item) => item.id === Number(restaurantId)),
+    findRestaurantByRouteId(getRestaurants(), restaurantId),
   );
   const listFallbackPath = getListPath(searchParams);
   const returnPath = getReturnPath(location.state);
 
   useEffect(() => {
     const controller = new AbortController();
-    const baseRestaurant = getRestaurants().find(
-      (item) => item.id === Number(restaurantId),
+    const baseRestaurant = findRestaurantByRouteId(
+      getRestaurants(),
+      restaurantId,
     );
     setRestaurant(baseRestaurant);
 
     if (baseRestaurant) {
+      const canonicalId = getRestaurantCanonicalId(baseRestaurant);
+      if (restaurantId !== canonicalId) {
+        navigate(`/restaurants/${canonicalId}${location.search}`, {
+          replace: true,
+          state: location.state,
+        });
+      }
+
       void hydrateRestaurantsWithSupport([baseRestaurant], controller.signal).then(
         ([hydratedRestaurant]) => {
           if (!controller.signal.aborted && hydratedRestaurant) {
@@ -50,7 +63,7 @@ export function RestaurantDetailPage() {
     }
 
     return () => controller.abort();
-  }, [restaurantId]);
+  }, [location.search, location.state, navigate, restaurantId]);
 
   const handleBackToList = () => {
     if (returnPath && canNavigateBack()) {
@@ -94,7 +107,8 @@ export function RestaurantDetailPage() {
       ? `${restaurant.latitude},${restaurant.longitude}`
       : restaurant.address || `${restaurant.nameEn} ${restaurant.area} Japan`;
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
-  const editPath = `/restaurants/${restaurant.id}/edit${
+  const canonicalRestaurantId = getRestaurantCanonicalId(restaurant);
+  const editPath = `/restaurants/${canonicalRestaurantId}/edit${
     searchParams.size > 0 ? `?${searchParams.toString()}` : ""
   }`;
   const detailPath = `${location.pathname}${location.search}`;

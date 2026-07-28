@@ -46,7 +46,9 @@ export class RestaurantApiError extends Error {
   }
 }
 
-function createStableRestaurantId(externalId: string): number {
+// Retained only as an internal/cache ID and for resolving previously issued URLs.
+// Routes and Supabase use the official Hot Pepper ID in `externalId`.
+function createLegacyInternalRestaurantId(externalId: string): number {
   let hash = 0;
 
   for (const character of externalId) {
@@ -92,7 +94,7 @@ function convertShop(
   }
 
   return {
-    id: createStableRestaurantId(shop.id),
+    id: createLegacyInternalRestaurantId(shop.id),
     externalId: shop.id,
     nameEn: shop.name,
     nameJa: shop.name_kana || shop.name,

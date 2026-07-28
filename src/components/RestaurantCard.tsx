@@ -8,6 +8,7 @@ import type {
 import { getFeatureStatus } from "../utils/features";
 import type { MatchResult } from "../utils/match";
 import type { ReturnNavigationState } from "../utils/restaurantSearch";
+import { getRestaurantCanonicalId } from "../utils/restaurantId";
 
 type Props = {
   restaurant: Restaurant;
@@ -22,7 +23,8 @@ export function RestaurantCard({
 }: Props) {
   const location = useLocation();
   const listPath = `${location.pathname}${location.search}`;
-  const detailPath = `/restaurants/${restaurant.id}${location.search}`;
+  const restaurantId = getRestaurantCanonicalId(restaurant);
+  const detailPath = `/restaurants/${restaurantId}${location.search}`;
   const returnState: ReturnNavigationState = { from: listPath };
 
   return (

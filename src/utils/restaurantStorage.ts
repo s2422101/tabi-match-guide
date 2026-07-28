@@ -1,6 +1,7 @@
 import { restaurants as initialRestaurants } from "../data/restaurants";
 import type { Restaurant } from "../types/restaurant";
 import { normalizeFeatureStatuses } from "./features";
+import { getRestaurantCanonicalId } from "./restaurantId";
 
 const storageKey = "tabi-match-guide:restaurants";
 const apiCacheKey = "tabi-match-guide:hotpepper-restaurants";
@@ -60,11 +61,14 @@ export function mergeRestaurantsWithSaved(
   restaurants: Restaurant[],
 ): Restaurant[] {
   const savedById = new Map(
-    readRestaurants(storageKey).map((restaurant) => [restaurant.id, restaurant]),
+    readRestaurants(storageKey).map((restaurant) => [
+      getRestaurantCanonicalId(restaurant),
+      restaurant,
+    ]),
   );
 
   return restaurants.map((restaurant) => {
-    const savedRestaurant = savedById.get(restaurant.id);
+    const savedRestaurant = savedById.get(getRestaurantCanonicalId(restaurant));
 
     if (!savedRestaurant) {
       return restaurant;
@@ -92,13 +96,13 @@ export function getSampleRestaurants(): Restaurant[] {
 }
 
 export function getRestaurants(): Restaurant[] {
-  const restaurantsById = new Map<number, Restaurant>();
+  const restaurantsById = new Map<string, Restaurant>();
 
   for (const restaurant of [
     ...initialRestaurants,
     ...readRestaurants(apiCacheKey),
   ]) {
-    restaurantsById.set(restaurant.id, restaurant);
+    restaurantsById.set(getRestaurantCanonicalId(restaurant), restaurant);
   }
 
   return mergeRestaurantsWithSaved([...restaurantsById.values()]);
@@ -106,11 +110,14 @@ export function getRestaurants(): Restaurant[] {
 
 export function cacheApiRestaurants(restaurants: Restaurant[]): void {
   const cachedById = new Map(
-    readRestaurants(apiCacheKey).map((restaurant) => [restaurant.id, restaurant]),
+    readRestaurants(apiCacheKey).map((restaurant) => [
+      getRestaurantCanonicalId(restaurant),
+      restaurant,
+    ]),
   );
 
   for (const restaurant of restaurants) {
-    cachedById.set(restaurant.id, restaurant);
+    cachedById.set(getRestaurantCanonicalId(restaurant), restaurant);
   }
 
   localStorage.setItem(apiCacheKey, JSON.stringify([...cachedById.values()]));

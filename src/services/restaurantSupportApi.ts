@@ -4,6 +4,7 @@ import type {
   RestaurantFeature,
 } from "../types/restaurant";
 import { restaurantFeatures } from "../utils/features";
+import { getRestaurantCanonicalId } from "../utils/restaurantId";
 import {
   clearLegacyRestaurantEdits,
   getLegacyRestaurantEdits,
@@ -34,7 +35,7 @@ export class RestaurantSupportApiError extends Error {
 }
 
 export function getRestaurantSupportId(restaurant: Restaurant): string {
-  return restaurant.externalId || String(restaurant.id);
+  return getRestaurantCanonicalId(restaurant);
 }
 
 function isFeatureStatus(value: unknown): value is FeatureStatus {

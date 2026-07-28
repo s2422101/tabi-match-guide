@@ -24,6 +24,10 @@ import {
   getRestaurants,
 } from "../utils/restaurantStorage";
 import {
+  findRestaurantByRouteId,
+  getRestaurantCanonicalId,
+} from "../utils/restaurantId";
+import {
   canNavigateBack,
   getReturnPath,
 } from "../utils/restaurantSearch";
@@ -51,7 +55,7 @@ export function RestaurantEditPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(() =>
-    getRestaurants().find((item) => item.id === Number(restaurantId)),
+    findRestaurantByRouteId(getRestaurants(), restaurantId),
   );
   const [nameEn, setNameEn] = useState(restaurant?.nameEn ?? "");
   const [nameJa, setNameJa] = useState(restaurant?.nameJa ?? "");
@@ -88,14 +92,23 @@ export function RestaurantEditPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const baseRestaurant = getRestaurants().find(
-      (item) => item.id === Number(restaurantId),
+    const baseRestaurant = findRestaurantByRouteId(
+      getRestaurants(),
+      restaurantId,
     );
     setRestaurant(baseRestaurant);
 
     if (!baseRestaurant) {
       setIsLoadingSupport(false);
       return () => controller.abort();
+    }
+
+    const canonicalId = getRestaurantCanonicalId(baseRestaurant);
+    if (restaurantId !== canonicalId) {
+      navigate(`/restaurants/${canonicalId}/edit${location.search}`, {
+        replace: true,
+        state: location.state,
+      });
     }
 
     setIsLoadingSupport(true);
@@ -113,7 +126,7 @@ export function RestaurantEditPage() {
     );
 
     return () => controller.abort();
-  }, [restaurantId]);
+  }, [location.search, location.state, navigate, restaurantId]);
 
   if (!restaurant) {
     return (
@@ -132,7 +145,8 @@ export function RestaurantEditPage() {
     );
   }
 
-  const detailPath = `/restaurants/${restaurant.id}${location.search}`;
+  const canonicalRestaurantId = getRestaurantCanonicalId(restaurant);
+  const detailPath = `/restaurants/${canonicalRestaurantId}${location.search}`;
   const returnPath = getReturnPath(location.state);
 
   const handleStatusChange = (

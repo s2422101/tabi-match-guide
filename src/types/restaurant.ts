@@ -16,7 +16,9 @@ export type FeatureStatusMap = Record<RestaurantFeature, FeatureStatus>;
 export type SearchArea = "all" | "Asakusa" | "Ueno";
 
 export type Restaurant = {
+  /** Internal numeric ID retained for cached data and legacy URL compatibility. */
   id: number;
+  /** Official Hot Pepper restaurant ID. Used for routes and support storage. */
   externalId?: string;
   nameJa: string;
   nameEn: string;
