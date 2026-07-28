@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import "./App.css";
 import { HotpepperAttribution } from "./components/HotpepperAttribution";
 import { PreferenceForm } from "./components/PreferenceForm";
+import { preferenceOptions } from "./components/preferenceOptions";
 import { RestaurantCard } from "./components/RestaurantCard";
 import { AdminAuthActions } from "./components/AdminAuthActions";
 import { FavoritesLink } from "./components/FavoritesLink";
+import { BackToTopButton } from "./components/BackToTopButton";
 import { translateRestaurants } from "./services/deeplApi";
 import {
   fetchHotpepperRestaurants,
@@ -44,8 +46,22 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSampleMode, setIsSampleMode] = useState(false);
+  const [areFiltersOpen, setAreFiltersOpen] = useState(false);
+  const resultsRef = useRef<HTMLElement>(null);
+  const shouldScrollToResultsRef = useRef(false);
+
+  const closeFiltersAndPrepareResultsScroll = () => {
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      setAreFiltersOpen(false);
+      shouldScrollToResultsRef.current = true;
+    }
+  };
 
   const handleAreaChange = (area: SearchArea) => {
+    if (area === selectedArea) {
+      return;
+    }
+
     const nextParams = new URLSearchParams(searchParams);
 
     if (area === "all") {
@@ -54,6 +70,8 @@ function App() {
       nextParams.set("area", area);
     }
 
+    closeFiltersAndPrepareResultsScroll();
+    setLoadingState("restaurants");
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -66,6 +84,7 @@ function App() {
       nextParams.set("features", features.join(","));
     }
 
+    closeFiltersAndPrepareResultsScroll();
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -130,6 +149,22 @@ function App() {
     return () => controller.abort();
   }, [retryCount, selectedArea]);
 
+  useEffect(() => {
+    if (loadingState !== null || !shouldScrollToResultsRef.current) {
+      return;
+    }
+
+    shouldScrollToResultsRef.current = false;
+    const frameId = window.requestAnimationFrame(() => {
+      resultsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [errorMessage, loadingState, selectedFeatures]);
+
   const rankedRestaurants = useMemo(() => {
     return restaurants
       .filter((restaurant) => {
@@ -156,6 +191,13 @@ function App() {
   const hasApiRestaurants = rankedRestaurants.some(
     ({ restaurant }) => restaurant.isApiRestaurant,
   );
+  const areaSummary = selectedArea === "all" ? "All Areas" : selectedArea;
+  const selectedFeatureLabels = preferenceOptions
+    .filter(({ id }) => selectedFeatures.includes(id))
+    .map(({ labelEn }) => labelEn);
+  const filterSummary = selectedFeatureLabels.length > 0
+    ? `${areaSummary} · ${selectedFeatureLabels.join(", ")}`
+    : `${areaSummary} · No preferences selected`;
 
   return (
     <main>
@@ -177,7 +219,36 @@ function App() {
         </p>
       </header>
 
-      <section className="area-section">
+      <div className="filters-container">
+        <button
+          type="button"
+          className="filters-toggle"
+          onClick={() => setAreFiltersOpen((isOpen) => !isOpen)}
+          aria-expanded={areFiltersOpen}
+          aria-controls="restaurant-search-filters"
+        >
+          <span className="filters-toggle-heading">
+            <span>
+              <strong>Filters</strong>
+              <small>検索条件を変更</small>
+            </span>
+            <span className="filters-count">
+              {selectedFeatures.length} selected
+            </span>
+            <span className="filters-chevron" aria-hidden="true">
+              {areFiltersOpen ? "−" : "+"}
+            </span>
+          </span>
+          <span className="filters-summary" title={filterSummary}>
+            {filterSummary}
+          </span>
+        </button>
+
+        <div
+          id="restaurant-search-filters"
+          className={areFiltersOpen ? "filters-content is-open" : "filters-content"}
+        >
+          <section className="area-section">
         <div className="area-heading">
           <h2>Select an area</h2>
           <p>エリアを選択してください</p>
@@ -216,14 +287,16 @@ function App() {
             <span>APIキー未設定のためサンプル店舗を表示しています。</span>
           </p>
         )}
-      </section>
+          </section>
 
-      <PreferenceForm
-        selectedFeatures={selectedFeatures}
-        onChange={handleFeaturesChange}
-      />
+          <PreferenceForm
+            selectedFeatures={selectedFeatures}
+            onChange={handleFeaturesChange}
+          />
+        </div>
+      </div>
 
-      <section className="results-section">
+      <section className="results-section" ref={resultsRef} id="restaurant-results">
         <div className="results-heading">
           <div>
             <p className="eyebrow">Restaurant Matches</p>
@@ -263,10 +336,22 @@ function App() {
             <strong>Could not load restaurants.</strong>
             <span>店舗情報を取得できませんでした。</span>
             <small>{errorMessage}</small>
-            <button type="button" onClick={() => setRetryCount((count) => count + 1)}>
+            <button
+              type="button"
+              onClick={() => {
+                closeFiltersAndPrepareResultsScroll();
+                setLoadingState("restaurants");
+                setRetryCount((count) => count + 1);
+              }}
+            >
               Retry
               <span>再試行</span>
             </button>
+          </div>
+        ) : rankedRestaurants.length === 0 ? (
+          <div className="results-status" aria-live="polite">
+            <strong>No restaurants found.</strong>
+            <span>条件に合う店舗が見つかりませんでした。</span>
           </div>
         ) : (
           <div className="restaurant-list">
@@ -283,6 +368,7 @@ function App() {
 
         {hasApiRestaurants && <HotpepperAttribution />}
       </section>
+      <BackToTopButton />
     </main>
   );
 }
