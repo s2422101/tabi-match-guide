@@ -9,6 +9,7 @@ import {
   fetchHotpepperRestaurants,
   RestaurantApiError,
 } from "./services/hotpepperApi";
+import { hydrateRestaurantsWithSupport } from "./services/restaurantSupportApi";
 import type {
   RestaurantFeature,
   SearchArea,
@@ -17,7 +18,6 @@ import { calculateMatchResult } from "./utils/match";
 import {
   cacheApiRestaurants,
   getSampleRestaurants,
-  mergeRestaurantsWithSaved,
 } from "./utils/restaurantStorage";
 import {
   getAreaFromSearchParams,
@@ -36,7 +36,7 @@ function App() {
     [searchParams],
   );
   const [loadingState, setLoadingState] = useState<
-    "restaurants" | "translation" | null
+    "restaurants" | "translation" | "support" | null
   >("restaurants");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -87,7 +87,10 @@ function App() {
         );
 
         cacheApiRestaurants(displayRestaurants);
-        setRestaurants(mergeRestaurantsWithSaved(displayRestaurants));
+        setLoadingState("support");
+        setRestaurants(
+          await hydrateRestaurantsWithSupport(displayRestaurants, controller.signal),
+        );
       } catch (error: unknown) {
         if (controller.signal.aborted) {
           return;
@@ -97,7 +100,13 @@ function App() {
           error instanceof RestaurantApiError &&
           error.code === "HOTPEPPER_API_KEY_MISSING"
         ) {
-          setRestaurants(getSampleRestaurants());
+          setLoadingState("support");
+          setRestaurants(
+            await hydrateRestaurantsWithSupport(
+              getSampleRestaurants(),
+              controller.signal,
+            ),
+          );
           setIsSampleMode(true);
           return;
         }
@@ -230,11 +239,15 @@ function App() {
             <strong>
               {loadingState === "translation"
                 ? "Loading translation..."
+                : loadingState === "support"
+                  ? "Loading restaurant support..."
                 : "Loading restaurants..."}
             </strong>
             <span>
               {loadingState === "translation"
                 ? "英語へ翻訳しています…"
+                : loadingState === "support"
+                  ? "店舗独自情報を読み込んでいます…"
                 : "店舗情報を読み込んでいます…"}
             </span>
           </div>

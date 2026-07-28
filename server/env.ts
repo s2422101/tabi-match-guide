@@ -7,6 +7,8 @@ export type EnvironmentStatus = {
   envFileLoaded: boolean;
   hotpepperConfigured: boolean;
   deepLConfigured: boolean;
+  supabaseUrlConfigured: boolean;
+  supabaseServiceRoleKeyConfigured: boolean;
 };
 
 export function loadServerEnvironment(): EnvironmentStatus {
@@ -20,6 +22,10 @@ export function loadServerEnvironment(): EnvironmentStatus {
     envFileLoaded: !result.error,
     hotpepperConfigured: Boolean(process.env.HOTPEPPER_API_KEY?.trim()),
     deepLConfigured: Boolean(process.env.DEEPL_API_KEY?.trim()),
+    supabaseUrlConfigured: Boolean(process.env.SUPABASE_URL?.trim()),
+    supabaseServiceRoleKeyConfigured: Boolean(
+      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
+    ),
   };
 }
 
@@ -32,5 +38,15 @@ export function logEnvironmentStatus(status: EnvironmentStatus): void {
   );
   console.log(
     `[env] DEEPL_API_KEY: ${status.deepLConfigured ? "configured" : "missing"}`,
+  );
+  console.log(
+    `[env] SUPABASE_URL: ${
+      status.supabaseUrlConfigured ? "configured" : "missing"
+    }`,
+  );
+  console.log(
+    `[env] SUPABASE_SERVICE_ROLE_KEY: ${
+      status.supabaseServiceRoleKeyConfigured ? "configured" : "missing"
+    }`,
   );
 }

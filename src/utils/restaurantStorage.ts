@@ -79,6 +79,14 @@ export function mergeRestaurantsWithSaved(
   });
 }
 
+export function getLegacyRestaurantEdits(): Restaurant[] {
+  return readRestaurants(storageKey);
+}
+
+export function clearLegacyRestaurantEdits(): void {
+  localStorage.removeItem(storageKey);
+}
+
 export function getSampleRestaurants(): Restaurant[] {
   return mergeRestaurantsWithSaved(initialRestaurants);
 }
@@ -106,21 +114,4 @@ export function cacheApiRestaurants(restaurants: Restaurant[]): void {
   }
 
   localStorage.setItem(apiCacheKey, JSON.stringify([...cachedById.values()]));
-}
-
-export function saveRestaurant(updatedRestaurant: Restaurant): void {
-  const savedById = new Map(
-    readRestaurants(storageKey).map((restaurant) => [restaurant.id, restaurant]),
-  );
-  const normalizedRestaurant = {
-    ...updatedRestaurant,
-    featureStatuses: normalizeFeatureStatuses(
-      updatedRestaurant.featureStatuses,
-      updatedRestaurant.features,
-    ),
-  };
-  delete normalizedRestaurant.features;
-  savedById.set(updatedRestaurant.id, normalizedRestaurant);
-
-  localStorage.setItem(storageKey, JSON.stringify([...savedById.values()]));
 }

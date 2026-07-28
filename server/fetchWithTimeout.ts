@@ -19,7 +19,7 @@ export function getApiTimeoutMs(): number {
 }
 
 export async function fetchWithTimeout(
-  input: string | URL,
+  input: RequestInfo | URL,
   init: RequestInit = {},
 ): Promise<Response> {
   const controller = new AbortController();

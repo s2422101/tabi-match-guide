@@ -6,6 +6,14 @@ import { translateTexts } from "./deepl.js";
 import { loadServerEnvironment, logEnvironmentStatus } from "./env.js";
 import { ApiError, errorBody } from "./errors.js";
 import { getRestaurants, type SearchArea } from "./hotpepper.js";
+import {
+  validateRestaurantId,
+  validateRestaurantSupportInput,
+} from "./restaurantSupport.js";
+import {
+  getRestaurantSupport,
+  upsertRestaurantSupport,
+} from "./supabase.js";
 
 const environmentStatus = loadServerEnvironment();
 const app = new Hono();
@@ -21,7 +29,7 @@ app.use(
   cors({
     origin: allowedOrigins,
     allowHeaders: ["Content-Type"],
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "OPTIONS"],
     maxAge: 600,
   }),
 );
@@ -90,6 +98,29 @@ app.post(
     return c.json(result);
   },
 );
+
+app.get("/api/restaurants/:restaurantId/support", async (c) => {
+  const restaurantId = validateRestaurantId(c.req.param("restaurantId"));
+  const support = await getRestaurantSupport(restaurantId);
+  return c.json({ support });
+});
+
+app.put("/api/restaurants/:restaurantId/support", async (c) => {
+  let body: unknown;
+
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new ApiError(400, "INVALID_JSON", "A valid JSON body is required.");
+  }
+
+  const input = validateRestaurantSupportInput(
+    c.req.param("restaurantId"),
+    body,
+  );
+  const support = await upsertRestaurantSupport(input);
+  return c.json({ support });
+});
 
 app.notFound((c) =>
   c.json(errorBody("NOT_FOUND", "The requested API route was not found."), 404),

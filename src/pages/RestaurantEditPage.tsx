@@ -5,6 +5,10 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+import {
+  hydrateRestaurantsWithSupport,
+  saveRestaurantSupport,
+} from "../services/restaurantSupportApi";
 import type {
   FeatureStatus,
   RestaurantFeature,
@@ -18,7 +22,6 @@ import {
 } from "../utils/features";
 import {
   getRestaurants,
-  saveRestaurant,
 } from "../utils/restaurantStorage";
 import {
   canNavigateBack,
@@ -47,14 +50,19 @@ export function RestaurantEditPage() {
   const { restaurantId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const restaurant = getRestaurants().find(
-    (item) => item.id === Number(restaurantId),
+  const [restaurant, setRestaurant] = useState(() =>
+    getRestaurants().find((item) => item.id === Number(restaurantId)),
   );
   const [nameEn, setNameEn] = useState(restaurant?.nameEn ?? "");
   const [nameJa, setNameJa] = useState(restaurant?.nameJa ?? "");
   const [featureStatuses, setFeatureStatuses] = useState(
     restaurant?.featureStatuses ?? createUnknownFeatureStatuses(),
   );
+  const [isLoadingSupport, setIsLoadingSupport] = useState(Boolean(restaurant));
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "success" | "error"
+  >("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const isDirty = restaurant
     ? nameEn !== restaurant.nameEn ||
       nameJa !== restaurant.nameJa ||
@@ -77,6 +85,35 @@ export function RestaurantEditPage() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const baseRestaurant = getRestaurants().find(
+      (item) => item.id === Number(restaurantId),
+    );
+    setRestaurant(baseRestaurant);
+
+    if (!baseRestaurant) {
+      setIsLoadingSupport(false);
+      return () => controller.abort();
+    }
+
+    setIsLoadingSupport(true);
+    void hydrateRestaurantsWithSupport([baseRestaurant], controller.signal).then(
+      ([hydratedRestaurant]) => {
+        if (controller.signal.aborted || !hydratedRestaurant) {
+          return;
+        }
+        setRestaurant(hydratedRestaurant);
+        setNameEn(hydratedRestaurant.nameEn);
+        setNameJa(hydratedRestaurant.nameJa);
+        setFeatureStatuses(hydratedRestaurant.featureStatuses);
+        setIsLoadingSupport(false);
+      },
+    );
+
+    return () => controller.abort();
+  }, [restaurantId]);
 
   if (!restaurant) {
     return (
@@ -127,15 +164,26 @@ export function RestaurantEditPage() {
     navigate(detailPath);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    saveRestaurant({
-      ...restaurant,
-      nameEn: nameEn.trim(),
-      nameJa: nameJa.trim(),
-      featureStatuses,
-    });
-    navigate(detailPath, { replace: true });
+    setSaveState("saving");
+    setSaveError(null);
+
+    try {
+      await saveRestaurantSupport({
+        ...restaurant,
+        nameEn: nameEn.trim(),
+        nameJa: nameJa.trim(),
+        featureStatuses,
+      });
+      setSaveState("success");
+      window.setTimeout(() => navigate(detailPath, { replace: true }), 500);
+    } catch (error: unknown) {
+      setSaveState("error");
+      setSaveError(
+        error instanceof Error ? error.message : "Could not save restaurant information.",
+      );
+    }
   };
 
   return (
@@ -154,6 +202,13 @@ export function RestaurantEditPage() {
         <h1>Edit restaurant information</h1>
         <p className="section-title-ja">店舗情報を編集</p>
 
+        {isLoadingSupport && (
+          <p className="edit-save-status" aria-live="polite">
+            <strong>Loading restaurant support...</strong>
+            <span>店舗独自情報を読み込んでいます…</span>
+          </p>
+        )}
+
         <form className="edit-form" onSubmit={handleSubmit}>
           <div className="edit-name-grid">
             <label className="edit-field">
@@ -164,6 +219,7 @@ export function RestaurantEditPage() {
                 value={nameEn}
                 onChange={(event) => setNameEn(event.target.value)}
                 required
+                disabled={isLoadingSupport || saveState === "saving"}
               />
             </label>
 
@@ -175,6 +231,7 @@ export function RestaurantEditPage() {
                 value={nameJa}
                 onChange={(event) => setNameJa(event.target.value)}
                 required
+                disabled={isLoadingSupport || saveState === "saving"}
               />
             </label>
           </div>
@@ -205,6 +262,7 @@ export function RestaurantEditPage() {
                           value={status}
                           checked={featureStatuses[feature] === status}
                           onChange={() => handleStatusChange(feature, status)}
+                          disabled={isLoadingSupport || saveState === "saving"}
                         />
                         <span>
                           <strong>{featureEditStatusLabels[status]}</strong>
@@ -219,18 +277,39 @@ export function RestaurantEditPage() {
           </fieldset>
 
           <div className="edit-actions">
-            <button type="submit" className="save-button">
-              Save changes
-              <span>変更を保存</span>
+            <button
+              type="submit"
+              className="save-button"
+              disabled={isLoadingSupport || saveState === "saving"}
+            >
+              {saveState === "saving" ? "Saving..." : "Save changes"}
+              <span>{saveState === "saving" ? "保存中…" : "変更を保存"}</span>
             </button>
             <button
               type="button"
               className="cancel-button"
               onClick={handleCancel}
+              disabled={saveState === "saving"}
             >
               <strong>Cancel and go back</strong>
               <span>変更せず店舗詳細へ戻る</span>
             </button>
+          </div>
+
+          <div className="edit-save-result" aria-live="polite">
+            {saveState === "success" && (
+              <p className="save-success">
+                <strong>Saved successfully.</strong>
+                <span>保存しました。店舗詳細へ戻ります。</span>
+              </p>
+            )}
+            {saveState === "error" && (
+              <p className="save-error" role="alert">
+                <strong>Could not save changes.</strong>
+                <span>変更を保存できませんでした。</span>
+                {saveError && <small>{saveError}</small>}
+              </p>
+            )}
           </div>
         </form>
       </section>

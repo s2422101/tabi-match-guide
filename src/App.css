@@ -1159,6 +1159,50 @@ main {
   font-size: 0.7rem;
 }
 
+.save-button:disabled,
+.cancel-button:disabled,
+.edit-status-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.edit-save-status,
+.save-success,
+.save-error {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 12px;
+  padding: 12px 15px;
+}
+
+.edit-save-status {
+  margin: 18px 0 0;
+  background: #f1f5f4;
+  color: #52605c;
+}
+
+.edit-save-status span,
+.save-success span,
+.save-error span,
+.save-error small {
+  font-size: 0.72rem;
+}
+
+.edit-save-result:empty {
+  display: none;
+}
+
+.save-success {
+  background: #edf9f5;
+  color: #0d6f58;
+}
+
+.save-error {
+  background: #fff4f1;
+  color: #9b4435;
+}
+
 @media (max-width: 760px) {
   .restaurant-heading {
     flex-direction: column;

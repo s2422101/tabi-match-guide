@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Link,
   useLocation,
@@ -11,6 +12,7 @@ import { MatchSummary } from "../components/MatchSummary";
 import { getFeatureStatus } from "../utils/features";
 import { calculateMatchResult } from "../utils/match";
 import { getRestaurants } from "../utils/restaurantStorage";
+import { hydrateRestaurantsWithSupport } from "../services/restaurantSupportApi";
 import {
   canNavigateBack,
   getFeaturesFromSearchParams,
@@ -24,11 +26,31 @@ export function RestaurantDetailPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const restaurant = getRestaurants().find(
-    (item) => item.id === Number(restaurantId),
+  const [restaurant, setRestaurant] = useState(() =>
+    getRestaurants().find((item) => item.id === Number(restaurantId)),
   );
   const listFallbackPath = getListPath(searchParams);
   const returnPath = getReturnPath(location.state);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const baseRestaurant = getRestaurants().find(
+      (item) => item.id === Number(restaurantId),
+    );
+    setRestaurant(baseRestaurant);
+
+    if (baseRestaurant) {
+      void hydrateRestaurantsWithSupport([baseRestaurant], controller.signal).then(
+        ([hydratedRestaurant]) => {
+          if (!controller.signal.aborted && hydratedRestaurant) {
+            setRestaurant(hydratedRestaurant);
+          }
+        },
+      );
+    }
+
+    return () => controller.abort();
+  }, [restaurantId]);
 
   const handleBackToList = () => {
     if (returnPath && canNavigateBack()) {
