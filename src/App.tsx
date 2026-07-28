@@ -5,6 +5,7 @@ import { HotpepperAttribution } from "./components/HotpepperAttribution";
 import { PreferenceForm } from "./components/PreferenceForm";
 import { RestaurantCard } from "./components/RestaurantCard";
 import { AdminAuthActions } from "./components/AdminAuthActions";
+import { FavoritesLink } from "./components/FavoritesLink";
 import { translateRestaurants } from "./services/deeplApi";
 import {
   fetchHotpepperRestaurants,
@@ -160,6 +161,7 @@ function App() {
     <main>
       <header className="hero">
         <div className="hero-admin-actions">
+          <FavoritesLink />
           <AdminAuthActions />
         </div>
         <p className="eyebrow">TabiMatch Guide</p>

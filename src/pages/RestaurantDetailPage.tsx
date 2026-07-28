@@ -10,6 +10,8 @@ import { FeatureStatusItem } from "../components/FeatureStatusItem";
 import { HotpepperAttribution } from "../components/HotpepperAttribution";
 import { MatchSummary } from "../components/MatchSummary";
 import { AdminAuthActions } from "../components/AdminAuthActions";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { FavoritesLink } from "../components/FavoritesLink";
 import { useAuth } from "../auth/useAuth";
 import { getFeatureStatus } from "../utils/features";
 import { calculateMatchResult } from "../utils/match";
@@ -128,7 +130,10 @@ export function RestaurantDetailPage() {
           <strong>Back to restaurant list</strong>
           <span>店舗一覧へ戻る</span>
         </button>
-        <AdminAuthActions />
+        <div className="detail-nav-actions">
+          <FavoritesLink />
+          <AdminAuthActions />
+        </div>
       </nav>
 
       <section className="detail-hero">
@@ -145,6 +150,8 @@ export function RestaurantDetailPage() {
 
           <h1>{restaurant.nameEn}</h1>
           <p className="detail-name-ja">{restaurant.nameJa}</p>
+
+          <FavoriteButton restaurant={restaurant} />
 
           <div className="detail-score">
             <MatchSummary result={matchResult} />

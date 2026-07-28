@@ -9,6 +9,7 @@ import { getFeatureStatus } from "../utils/features";
 import type { MatchResult } from "../utils/match";
 import type { ReturnNavigationState } from "../utils/restaurantSearch";
 import { getRestaurantCanonicalId } from "../utils/restaurantId";
+import { FavoriteButton } from "./FavoriteButton";
 
 type Props = {
   restaurant: Restaurant;
@@ -49,7 +50,10 @@ export function RestaurantCard({
             </p>
           </div>
 
-          <MatchSummary result={matchResult} />
+          <div className="restaurant-card-actions">
+            <FavoriteButton restaurant={restaurant} />
+            <MatchSummary result={matchResult} />
+          </div>
         </div>
 
         <p className="translated-content">

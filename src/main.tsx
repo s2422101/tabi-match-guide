@@ -8,27 +8,32 @@ import { RestaurantEditPage } from './pages/RestaurantEditPage.tsx'
 import { AdminLoginPage } from './pages/AdminLoginPage.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ProtectedAdminRoute } from './auth/ProtectedAdminRoute.tsx'
+import { FavoritesProvider } from './favorites/FavoritesContext.tsx'
+import { FavoritesPage } from './pages/FavoritesPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route
-            path="/restaurants/:restaurantId"
-            element={<RestaurantDetailPage />}
-          />
-          <Route
-            path="/restaurants/:restaurantId/edit"
-            element={
-              <ProtectedAdminRoute>
-                <RestaurantEditPage />
-              </ProtectedAdminRoute>
-            }
-          />
-        </Routes>
+        <FavoritesProvider>
+          <Routes>
+            <Route path="/" element={<App />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route
+              path="/restaurants/:restaurantId"
+              element={<RestaurantDetailPage />}
+            />
+            <Route
+              path="/restaurants/:restaurantId/edit"
+              element={
+                <ProtectedAdminRoute>
+                  <RestaurantEditPage />
+                </ProtectedAdminRoute>
+              }
+            />
+          </Routes>
+        </FavoritesProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

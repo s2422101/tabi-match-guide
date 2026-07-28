@@ -1,6 +1,6 @@
 # TabiMatch Guide
 
-浅草・上野周辺の飲食店を、希望条件とのマッチ率と英語翻訳付きで探せるReactアプリです。
+浅草・上野周辺の飲食店を、希望条件とのマッチ率と英語翻訳付きで探し、ブラウザーごとのお気に入りへ保存できるReactアプリです。
 ホットペッパーグルメAPI、DeepL API、Supabaseは、Honoバックエンドを経由して呼び出します。
 
 以下のコマンドは、プロジェクト直下をカレントディレクトリにして実行してください。
@@ -19,6 +19,7 @@ cd /path/to/tabi-match-guide
 - `PUT /api/restaurants/:restaurantId/support`
 - `GET /api/auth/me`
 - 管理者ログイン: `/admin/login`
+- お気に入り一覧: `/favorites`
 
 ## セットアップ
 
