@@ -6,6 +6,7 @@ import { getFeatureStatus } from "./features";
 
 export type MatchResult = {
   score: number | null;
+  informationCoverage: number | null;
   matchedCount: number;
   unmatchedCount: number;
   unknownCount: number;
@@ -40,6 +41,10 @@ export function calculateMatchResult(
       confirmedCount === 0
         ? null
         : Math.round((matchedCount / confirmedCount) * 100),
+    informationCoverage:
+      selectedFeatures.length === 0
+        ? null
+        : Math.round((confirmedCount / selectedFeatures.length) * 100),
     matchedCount,
     unmatchedCount,
     unknownCount,

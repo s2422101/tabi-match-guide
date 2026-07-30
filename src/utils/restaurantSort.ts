@@ -42,9 +42,17 @@ function compareByMatch(
   first: IndexedRestaurantResult,
   second: IndexedRestaurantResult,
 ): number {
-  return (
+  const scoreDifference =
     (second.result.matchResult.score ?? -1) -
-    (first.result.matchResult.score ?? -1)
+    (first.result.matchResult.score ?? -1);
+
+  if (scoreDifference !== 0) {
+    return scoreDifference;
+  }
+
+  return (
+    second.result.matchResult.confirmedCount -
+    first.result.matchResult.confirmedCount
   );
 }
 
