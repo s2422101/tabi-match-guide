@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 import "./App.css";
 import { HotpepperAttribution } from "./components/HotpepperAttribution";
@@ -29,10 +36,17 @@ import {
 import {
   getAreaFromSearchParams,
   getFeaturesFromSearchParams,
+  getListPath,
   getSortFromSearchParams,
 } from "./utils/restaurantSearch";
 import { getRestaurantCanonicalId } from "./utils/restaurantId";
 import { sortRestaurantResults } from "./utils/restaurantSort";
+
+const RestaurantResultsMap = lazy(() =>
+  import("./components/RestaurantResultsMap").then((module) => ({
+    default: module.RestaurantResultsMap,
+  })),
+);
 
 function App() {
   const { coordinates, status: locationStatus } = useLocation();
@@ -57,6 +71,7 @@ function App() {
   const [retryCount, setRetryCount] = useState(0);
   const [isSampleMode, setIsSampleMode] = useState(false);
   const [areFiltersOpen, setAreFiltersOpen] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [draftArea, setDraftArea] = useState<SearchArea>(selectedArea);
   const [draftFeatures, setDraftFeatures] = useState<RestaurantFeature[]>(
     selectedFeatures,
@@ -435,6 +450,52 @@ function App() {
             )}
           </div>
         </div>
+
+        <div className="results-map-controls">
+          <button
+            type="button"
+            className="map-toggle-button"
+            onClick={() => setIsMapOpen((isOpen) => !isOpen)}
+            aria-expanded={isMapOpen}
+            aria-controls="restaurant-results-map-panel"
+          >
+            <strong>{isMapOpen ? "Hide map" : "Show map"}</strong>
+            <span>{isMapOpen ? "地図を閉じる" : "地図を表示"}</span>
+          </button>
+          <p>
+            Compare restaurant locations on the map.
+            <span>検索結果の店舗位置を地図で比較できます。</span>
+          </p>
+        </div>
+
+        {isMapOpen && (
+          <div id="restaurant-results-map-panel" className="map-panel">
+            {loadingState ? (
+              <div className="map-loading-state" aria-live="polite">
+                <strong>Loading restaurant locations...</strong>
+                <span>店舗位置を読み込んでいます…</span>
+              </div>
+            ) : (
+              <Suspense
+                fallback={
+                  <div className="map-loading-state" aria-live="polite">
+                    <strong>Loading map...</strong>
+                    <span>地図を読み込んでいます…</span>
+                  </div>
+                }
+              >
+                <RestaurantResultsMap
+                  results={restaurantResults}
+                  userCoordinates={
+                    locationStatus === "success" ? coordinates : null
+                  }
+                  detailQuery={searchParams.toString()}
+                  returnPath={getListPath(searchParams)}
+                />
+              </Suspense>
+            )}
+          </div>
+        )}
 
         {loadingState ? (
           <div className="results-status" aria-live="polite">

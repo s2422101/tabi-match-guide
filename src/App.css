@@ -279,6 +279,224 @@ main {
   line-height: 1.4;
 }
 
+.results-map-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.map-toggle-button {
+  display: flex;
+  min-width: 150px;
+  min-height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid #167c68;
+  border-radius: 12px;
+  padding: 9px 16px;
+  background: #167c68;
+  color: white;
+  cursor: pointer;
+}
+
+.map-toggle-button span {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.map-toggle-button:hover,
+.map-toggle-button:focus-visible {
+  background: #126b5a;
+  outline: 3px solid rgba(22, 124, 104, 0.18);
+}
+
+.results-map-controls > p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #52605c;
+  font-size: 0.76rem;
+  text-align: left;
+}
+
+.results-map-controls > p span {
+  color: #73807c;
+  font-size: 0.66rem;
+}
+
+.map-panel {
+  margin-bottom: 24px;
+}
+
+.restaurant-results-map {
+  overflow: hidden;
+  width: 100%;
+  border: 1px solid #d7e1dd;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 8px 26px rgba(18, 38, 32, 0.1);
+}
+
+.leaflet-results-map {
+  width: 100%;
+  height: 460px;
+}
+
+.map-loading-state,
+.map-empty-state {
+  display: flex;
+  min-height: 170px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid #d7e1dd;
+  border-radius: 18px;
+  padding: 28px;
+  background: white;
+  color: #52605c;
+  text-align: center;
+}
+
+.map-loading-state span,
+.map-empty-state span {
+  color: #73807c;
+  font-size: 0.72rem;
+}
+
+.restaurant-map-marker,
+.user-location-map-marker {
+  display: grid !important;
+  border: 0;
+  background: transparent;
+  place-items: center;
+}
+
+.restaurant-map-marker > span,
+.user-location-map-marker > span {
+  display: grid;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(23, 32, 42, 0.32);
+  color: transparent;
+}
+
+.restaurant-map-marker > span {
+  width: 26px;
+  height: 26px;
+  background: #167c68;
+}
+
+.user-location-map-marker > span {
+  width: 28px;
+  height: 28px;
+  border-color: white;
+  background: #2767c5;
+  box-shadow:
+    0 0 0 5px rgba(39, 103, 197, 0.22),
+    0 3px 10px rgba(23, 32, 42, 0.32);
+}
+
+.map-popup-content,
+.map-user-location-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #17202a;
+  text-align: left;
+}
+
+.map-popup-content > strong {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.map-popup-content > small,
+.map-popup-content > span,
+.map-user-location-popup > span {
+  color: #73807c;
+  font-size: 0.7rem;
+}
+
+.map-popup-content dl {
+  display: grid;
+  gap: 4px;
+  margin: 7px 0;
+}
+
+.map-popup-content dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-popup-content dt,
+.map-popup-content dd {
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.map-popup-content dt {
+  color: #52605c;
+}
+
+.map-popup-content dd {
+  color: #126b5a;
+  font-weight: 800;
+  text-align: right;
+}
+
+.map-popup-content > p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 6px;
+  color: #126b5a;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.map-popup-content > p small {
+  font-size: 0.66rem;
+}
+
+.map-details-link {
+  display: flex;
+  min-height: 42px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: #17202a;
+  color: white !important;
+  text-decoration: none;
+}
+
+.map-details-link span {
+  font-size: 0.66rem;
+  opacity: 0.8;
+}
+
+.restaurant-results-map .leaflet-popup-content-wrapper {
+  border-radius: 13px;
+}
+
+.restaurant-results-map .leaflet-popup-content {
+  max-width: calc(100vw - 78px);
+  margin: 14px;
+}
+
+.restaurant-results-map .leaflet-control-attribution {
+  max-width: calc(100% - 12px);
+  font-size: 0.58rem;
+}
+
 .restaurant-list {
   display: grid;
   gap: 20px;
@@ -2167,6 +2385,27 @@ main {
 }
 
 @media (max-width: 760px) {
+  .results-map-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .map-toggle-button {
+    width: 100%;
+  }
+
+  .map-panel {
+    margin-inline: -4px;
+  }
+
+  .leaflet-results-map {
+    height: 330px;
+  }
+
+  .restaurant-results-map .leaflet-popup-content {
+    max-width: min(250px, calc(100vw - 92px));
+  }
+
   .hero-admin-actions {
     margin-top: -52px;
   }
@@ -2238,5 +2477,11 @@ main {
     width: 100%;
     align-items: center;
     text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .leaflet-results-map {
+    height: 310px;
   }
 }
