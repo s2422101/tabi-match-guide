@@ -103,12 +103,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (supabase) {
-      await supabase.auth.signOut();
+    try {
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+    } finally {
+      setSession(null);
+      setIsAdmin(false);
+      setIsLoading(false);
     }
-    setSession(null);
-    setIsAdmin(false);
-    setIsLoading(false);
   };
 
   const getAccessToken = async () => {

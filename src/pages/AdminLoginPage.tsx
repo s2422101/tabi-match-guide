@@ -92,7 +92,7 @@ export function AdminLoginPage() {
           </button>
         </form>
 
-        <Link to={returnPath} className="back-link auth-back-link">
+        <Link to="/" replace className="back-link auth-back-link">
           <strong>Go back</strong>
           <span>前の画面へ戻る</span>
         </Link>

@@ -29,6 +29,7 @@ import {
 } from "../utils/restaurantId";
 import {
   canNavigateBack,
+  getAdminReturnPath,
   getReturnPath,
 } from "../utils/restaurantSearch";
 import { useAuth } from "../auth/useAuth";
@@ -158,6 +159,7 @@ export function RestaurantEditPage() {
   const canonicalRestaurantId = getRestaurantCanonicalId(restaurant);
   const detailPath = `/restaurants/${canonicalRestaurantId}${location.search}`;
   const returnPath = getReturnPath(location.state);
+  const adminReturnPath = getAdminReturnPath(location.state);
 
   const handleStatusChange = (
     feature: RestaurantFeature,
@@ -177,6 +179,11 @@ export function RestaurantEditPage() {
 
   const handleCancel = () => {
     if (!confirmDiscardChanges()) {
+      return;
+    }
+
+    if (adminReturnPath) {
+      navigate(adminReturnPath);
       return;
     }
 
@@ -209,7 +216,10 @@ export function RestaurantEditPage() {
         accessToken,
       );
       setSaveState("success");
-      window.setTimeout(() => navigate(detailPath, { replace: true }), 500);
+      window.setTimeout(
+        () => navigate(adminReturnPath ?? detailPath, { replace: true }),
+        500,
+      );
     } catch (error: unknown) {
       setSaveState("error");
       setSaveError(
@@ -229,8 +239,14 @@ export function RestaurantEditPage() {
           className="back-link edit-back-button"
           onClick={handleCancel}
         >
-          <strong>Back to restaurant details</strong>
-          <span>店舗詳細へ戻る</span>
+          <strong>
+            {adminReturnPath
+              ? "Back to admin dashboard"
+              : "Back to restaurant details"}
+          </strong>
+          <span>
+            {adminReturnPath ? "管理画面へ戻る" : "店舗詳細へ戻る"}
+          </span>
         </button>
 
         <p className="eyebrow">Restaurant management</p>
@@ -326,8 +342,16 @@ export function RestaurantEditPage() {
               onClick={handleCancel}
               disabled={saveState === "saving"}
             >
-              <strong>Cancel and go back</strong>
-              <span>変更せず店舗詳細へ戻る</span>
+              <strong>
+                {adminReturnPath
+                  ? "Cancel and return to dashboard"
+                  : "Cancel and go back"}
+              </strong>
+              <span>
+                {adminReturnPath
+                  ? "変更せず管理画面へ戻る"
+                  : "変更せず店舗詳細へ戻る"}
+              </span>
             </button>
           </div>
 
@@ -335,7 +359,10 @@ export function RestaurantEditPage() {
             {saveState === "success" && (
               <p className="save-success">
                 <strong>Saved successfully.</strong>
-                <span>保存しました。店舗詳細へ戻ります。</span>
+                <span>
+                  保存しました。
+                  {adminReturnPath ? "管理画面" : "店舗詳細"}へ戻ります。
+                </span>
               </p>
             )}
             {saveState === "error" && (

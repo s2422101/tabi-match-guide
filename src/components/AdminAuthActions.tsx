@@ -26,6 +26,10 @@ export function AdminAuthActions() {
   return (
     <div className="admin-auth-signed-in">
       {user?.email && <small>{user.email}</small>}
+      <Link to="/admin" className="admin-dashboard-link">
+        <strong>Admin dashboard</strong>
+        <span>管理画面</span>
+      </Link>
       <button type="button" onClick={() => void signOut()}>
         <strong>Log out</strong>
         <span>ログアウト</span>

@@ -10,6 +10,7 @@ const validSorts: RestaurantSort[] = ["match", "budget", "distance"];
 
 export type ReturnNavigationState = {
   from: string;
+  adminReturnTo?: string;
 };
 
 export function getAreaFromSearchParams(
@@ -57,6 +58,24 @@ export function getReturnPath(state: unknown): string | null {
   const from = (state as { from?: unknown }).from;
   return typeof from === "string" && from.startsWith("/") && !from.startsWith("//")
     ? from
+    : null;
+}
+
+export function getAdminReturnPath(state: unknown): string | null {
+  const returnPath = getReturnPath(state);
+
+  if (returnPath === "/admin" || returnPath?.startsWith("/admin?")) {
+    return returnPath;
+  }
+
+  if (!state || typeof state !== "object" || !("adminReturnTo" in state)) {
+    return null;
+  }
+
+  const adminReturnTo = (state as { adminReturnTo?: unknown }).adminReturnTo;
+  return typeof adminReturnTo === "string" &&
+    (adminReturnTo === "/admin" || adminReturnTo.startsWith("/admin?"))
+    ? adminReturnTo
     : null;
 }
 

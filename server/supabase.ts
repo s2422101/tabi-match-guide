@@ -73,6 +73,26 @@ export async function getRestaurantSupport(
   return data;
 }
 
+export async function getRestaurantSupports(
+  restaurantIds: string[],
+): Promise<RestaurantSupportRow[]> {
+  if (restaurantIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await getSupabaseClient()
+    .from("restaurant_support")
+    .select(supportColumns)
+    .in("restaurant_id", restaurantIds)
+    .returns<RestaurantSupportRow[]>();
+
+  if (error) {
+    throwQueryError();
+  }
+
+  return data ?? [];
+}
+
 export async function upsertRestaurantSupport(
   input: RestaurantSupportInput,
 ): Promise<RestaurantSupportRow> {

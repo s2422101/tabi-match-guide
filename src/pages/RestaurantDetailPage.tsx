@@ -25,6 +25,7 @@ import {
 } from "../utils/restaurantId";
 import {
   canNavigateBack,
+  getAdminReturnPath,
   getFeaturesFromSearchParams,
   getListPath,
   getReturnPath,
@@ -43,6 +44,7 @@ export function RestaurantDetailPage() {
   );
   const listFallbackPath = getListPath(searchParams);
   const returnPath = getReturnPath(location.state);
+  const adminReturnPath = getAdminReturnPath(location.state);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -74,6 +76,11 @@ export function RestaurantDetailPage() {
   }, [location.search, location.state, navigate, restaurantId]);
 
   const handleBackToList = () => {
+    if (adminReturnPath) {
+      navigate(adminReturnPath);
+      return;
+    }
+
     if (returnPath && canNavigateBack()) {
       navigate(-1);
       return;
@@ -96,8 +103,14 @@ export function RestaurantDetailPage() {
             className="detail-back-button"
             onClick={handleBackToList}
           >
-            <strong>Back to restaurant list</strong>
-            <span>店舗一覧へ戻る</span>
+            <strong>
+              {adminReturnPath
+                ? "Back to admin dashboard"
+                : "Back to restaurant list"}
+            </strong>
+            <span>
+              {adminReturnPath ? "管理画面へ戻る" : "店舗一覧へ戻る"}
+            </span>
           </button>
         </section>
       </main>
@@ -121,6 +134,9 @@ export function RestaurantDetailPage() {
   }`;
   const detailPath = `${location.pathname}${location.search}`;
   const editReturnState: ReturnNavigationState = { from: detailPath };
+  if (adminReturnPath) {
+    editReturnState.adminReturnTo = adminReturnPath;
+  }
 
   return (
     <main className="detail-page">
@@ -130,8 +146,14 @@ export function RestaurantDetailPage() {
           className="detail-back-button"
           onClick={handleBackToList}
         >
-          <strong>Back to restaurant list</strong>
-          <span>店舗一覧へ戻る</span>
+          <strong>
+            {adminReturnPath
+              ? "Back to admin dashboard"
+              : "Back to restaurant list"}
+          </strong>
+          <span>
+            {adminReturnPath ? "管理画面へ戻る" : "店舗一覧へ戻る"}
+          </span>
         </button>
         <div className="detail-nav-actions">
           <FavoritesLink />

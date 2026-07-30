@@ -17,6 +17,7 @@ import {
 } from "./restaurantSupport.js";
 import {
   getRestaurantSupport,
+  getRestaurantSupports,
   upsertRestaurantSupport,
 } from "./supabase.js";
 
@@ -126,6 +127,50 @@ app.get("/api/restaurants/:restaurantId/support", async (c) => {
   const support = await getRestaurantSupport(restaurantId);
   return c.json({ support });
 });
+
+app.get(
+  "/api/restaurant-support",
+  validator("query", (query, c) => {
+    const rawIdsValue = query.ids;
+
+    if (!rawIdsValue) {
+      return c.json(
+        errorBody("INVALID_RESTAURANT_IDS", "ids is required."),
+        400,
+      );
+    }
+
+    const rawIds = Array.isArray(rawIdsValue)
+      ? rawIdsValue.join(",")
+      : rawIdsValue;
+
+    const ids = [...new Set(rawIds.split(",").map((id: string) => id.trim()))];
+
+    if (ids.length === 0 || ids.length > 100) {
+      return c.json(
+        errorBody(
+          "INVALID_RESTAURANT_IDS",
+          "ids must contain between 1 and 100 restaurant IDs.",
+        ),
+        400,
+      );
+    }
+
+    try {
+      return { ids: ids.map(validateRestaurantId) };
+    } catch (error: unknown) {
+      if (error instanceof ApiError) {
+        return c.json(errorBody(error.code, error.message), error.status);
+      }
+      throw error;
+    }
+  }),
+  async (c) => {
+    const { ids } = c.req.valid("query");
+    const supports = await getRestaurantSupports(ids);
+    return c.json({ supports });
+  },
+);
 
 app.get("/api/auth/me", async (c) => {
   const user = await requireAuthenticatedUser(c.req.header("Authorization"));

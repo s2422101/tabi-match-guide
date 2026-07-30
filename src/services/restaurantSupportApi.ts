@@ -11,7 +11,7 @@ import {
 } from "../utils/restaurantStorage";
 import { getApiUrl } from "./apiUrl";
 
-type RestaurantSupportRecord = {
+export type RestaurantSupportRecord = {
   restaurant_id: string;
   name_en: string;
   name_ja: string;
@@ -22,6 +22,11 @@ type RestaurantSupportRecord = {
 
 type SupportResponse = {
   support?: RestaurantSupportRecord | null;
+  error?: { code?: string; message?: string };
+};
+
+type SupportsResponse = {
+  supports?: RestaurantSupportRecord[];
   error?: { code?: string; message?: string };
 };
 
@@ -111,6 +116,51 @@ export async function fetchRestaurantSupport(
   );
   const data = await readResponse(response);
   return data.support ?? null;
+}
+
+export async function fetchRestaurantSupports(
+  restaurants: Restaurant[],
+  signal?: AbortSignal,
+): Promise<Map<string, RestaurantSupportRecord>> {
+  const restaurantIds = [
+    ...new Set(restaurants.map(getRestaurantSupportId)),
+  ];
+
+  if (restaurantIds.length === 0) {
+    return new Map();
+  }
+
+  const parameters = new URLSearchParams({ ids: restaurantIds.join(",") });
+  const response = await fetch(
+    getApiUrl(`/api/restaurant-support?${parameters.toString()}`),
+    { signal },
+  );
+  let data: SupportsResponse;
+
+  try {
+    data = (await response.json()) as SupportsResponse;
+  } catch {
+    throw new RestaurantSupportApiError(
+      "Support API returned an invalid response.",
+    );
+  }
+
+  if (!response.ok) {
+    throw new RestaurantSupportApiError(
+      data.error?.message || `Support API request failed (${response.status}).`,
+      data.error?.code,
+    );
+  }
+
+  if (!Array.isArray(data.supports)) {
+    throw new RestaurantSupportApiError(
+      "Support API returned an invalid response.",
+    );
+  }
+
+  return new Map(
+    data.supports.map((support) => [support.restaurant_id, support]),
+  );
 }
 
 export async function saveRestaurantSupport(

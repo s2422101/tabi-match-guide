@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./useAuth";
 
 export function ProtectedAdminRoute({ children }: { children: ReactNode }) {
-  const { isAdmin, isLoading } = useAuth();
+  const { isAdmin, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -17,13 +17,32 @@ export function ProtectedAdminRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!isAdmin) {
+  if (!user) {
     return (
       <Navigate
         to="/admin/login"
         replace
         state={{ from: `${location.pathname}${location.search}` }}
       />
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="auth-page">
+        <section className="auth-panel auth-access-denied" role="alert">
+          <p className="eyebrow">Access denied</p>
+          <h1>Administrator access is required.</h1>
+          <p className="section-title-ja">管理者権限が必要です</p>
+          <p className="auth-description">
+            This account is not authorized to manage restaurants.
+            <span>このアカウントには店舗管理の権限がありません。</span>
+          </p>
+          <Link to="/" className="details-button">
+            View public site
+          </Link>
+        </section>
+      </main>
     );
   }
 
