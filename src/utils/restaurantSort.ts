@@ -1,4 +1,8 @@
 import type { Restaurant, RestaurantSort } from "../types/restaurant";
+import {
+  calculateDistanceKm,
+  type Coordinates,
+} from "./distance";
 import type { MatchResult } from "./match";
 
 export type RestaurantResult = {
@@ -78,8 +82,37 @@ function compareByBudget(
   return firstBudget - secondBudget;
 }
 
+function compareByDistance(
+  first: IndexedRestaurantResult,
+  second: IndexedRestaurantResult,
+  coordinates: Coordinates | null,
+): number {
+  const firstDistance = calculateDistanceKm(coordinates, {
+    latitude: first.result.restaurant.latitude ?? Number.NaN,
+    longitude: first.result.restaurant.longitude ?? Number.NaN,
+  });
+  const secondDistance = calculateDistanceKm(coordinates, {
+    latitude: second.result.restaurant.latitude ?? Number.NaN,
+    longitude: second.result.restaurant.longitude ?? Number.NaN,
+  });
+
+  if (firstDistance === null && secondDistance === null) {
+    return 0;
+  }
+
+  if (firstDistance === null) {
+    return 1;
+  }
+
+  if (secondDistance === null) {
+    return -1;
+  }
+
+  return firstDistance - secondDistance;
+}
+
 const comparators: Record<
-  RestaurantSort,
+  Exclude<RestaurantSort, "distance">,
   (
     first: IndexedRestaurantResult,
     second: IndexedRestaurantResult,
@@ -92,8 +125,13 @@ const comparators: Record<
 export function sortRestaurantResults(
   results: RestaurantResult[],
   sort: RestaurantSort,
+  coordinates: Coordinates | null = null,
 ): RestaurantResult[] {
-  const comparator = comparators[sort];
+  const comparator =
+    sort === "distance"
+      ? (first: IndexedRestaurantResult, second: IndexedRestaurantResult) =>
+          compareByDistance(first, second, coordinates)
+      : comparators[sort];
 
   return results
     .map((result, originalIndex) => ({ result, originalIndex }))

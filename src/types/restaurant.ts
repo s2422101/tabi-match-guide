@@ -15,7 +15,7 @@ export type FeatureStatusMap = Record<RestaurantFeature, FeatureStatus>;
 
 export type SearchArea = "all" | "Asakusa" | "Ueno";
 
-export type RestaurantSort = "match" | "budget";
+export type RestaurantSort = "match" | "budget" | "distance";
 
 export type Restaurant = {
   /** Internal numeric ID retained for cached data and legacy URL compatibility. */

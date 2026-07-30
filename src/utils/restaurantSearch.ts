@@ -6,7 +6,7 @@ import type {
 import { restaurantFeatures } from "./features";
 
 const validAreas: SearchArea[] = ["all", "Asakusa", "Ueno"];
-const validSorts: RestaurantSort[] = ["match", "budget"];
+const validSorts: RestaurantSort[] = ["match", "budget", "distance"];
 
 export type ReturnNavigationState = {
   from: string;

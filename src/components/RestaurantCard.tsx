@@ -10,6 +10,7 @@ import type { MatchResult } from "../utils/match";
 import type { ReturnNavigationState } from "../utils/restaurantSearch";
 import { getRestaurantCanonicalId } from "../utils/restaurantId";
 import { FavoriteButton } from "./FavoriteButton";
+import { RestaurantDistance } from "./RestaurantDistance";
 
 type Props = {
   restaurant: Restaurant;
@@ -64,7 +65,11 @@ export function RestaurantCard({
             )}
         </p>
 
-        {(restaurant.address || restaurant.openingHours || restaurant.budget) && (
+        {(restaurant.address ||
+          restaurant.openingHours ||
+          restaurant.budget ||
+          (typeof restaurant.latitude === "number" &&
+            typeof restaurant.longitude === "number")) && (
           <dl className="restaurant-info-grid">
             {restaurant.address && (
               <div>
@@ -102,6 +107,7 @@ export function RestaurantCard({
                 </dd>
               </div>
             )}
+            <RestaurantDistance restaurant={restaurant} />
           </dl>
         )}
 

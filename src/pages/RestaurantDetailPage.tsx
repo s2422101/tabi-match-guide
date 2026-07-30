@@ -12,6 +12,7 @@ import { MatchSummary } from "../components/MatchSummary";
 import { AdminAuthActions } from "../components/AdminAuthActions";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FavoritesLink } from "../components/FavoritesLink";
+import { RestaurantDistance } from "../components/RestaurantDistance";
 import { useAuth } from "../auth/useAuth";
 import { getFeatureStatus } from "../utils/features";
 import { calculateMatchResult } from "../utils/match";
@@ -184,7 +185,11 @@ export function RestaurantDetailPage() {
           </p>
         </div>
 
-        {(restaurant.address || restaurant.openingHours || restaurant.budget) && (
+        {(restaurant.address ||
+          restaurant.openingHours ||
+          restaurant.budget ||
+          (typeof restaurant.latitude === "number" &&
+            typeof restaurant.longitude === "number")) && (
           <dl className="detail-info-grid">
             {restaurant.address && (
               <div>
@@ -222,6 +227,7 @@ export function RestaurantDetailPage() {
                 </dd>
               </div>
             )}
+            <RestaurantDistance restaurant={restaurant} />
           </dl>
         )}
 

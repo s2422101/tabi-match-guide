@@ -184,6 +184,101 @@ main {
   text-align: right;
 }
 
+.location-controls {
+  display: flex;
+  width: min(340px, 100%);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.location-button {
+  display: flex;
+  min-height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid #167c68;
+  border-radius: 12px;
+  padding: 9px 15px;
+  background: white;
+  color: #126b5a;
+  cursor: pointer;
+}
+
+.location-button span {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.location-button:hover,
+.location-button:focus-visible {
+  background: #edf9f5;
+  outline: 3px solid rgba(22, 124, 104, 0.16);
+}
+
+.location-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.location-message {
+  width: 100%;
+}
+
+.location-message:empty {
+  display: none;
+}
+
+.location-message p,
+.location-privacy-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  text-align: right;
+}
+
+.location-message p {
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f1f4f3;
+  color: #52605c;
+  font-size: 0.72rem;
+}
+
+.location-message p > span,
+.location-message small,
+.location-message small span,
+.location-privacy-note span {
+  font-size: 0.64rem;
+}
+
+.location-message small {
+  display: flex;
+  flex-direction: column;
+  margin-top: 3px;
+}
+
+.location-success {
+  border: 1px solid #b9dfd4;
+  background: #edf9f5 !important;
+  color: #0d6f58 !important;
+}
+
+.location-guidance {
+  border: 1px solid #ded7b9;
+  background: #fff9e8 !important;
+  color: #6f5a16 !important;
+}
+
+.location-privacy-note {
+  color: #73807c;
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+
 .restaurant-list {
   display: grid;
   gap: 20px;
@@ -861,6 +956,20 @@ main {
     text-align: left;
   }
 
+  .location-controls {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .location-button {
+    width: 100%;
+  }
+
+  .location-message p,
+  .location-privacy-note {
+    text-align: left;
+  }
+
   .restaurant-content {
     padding: 20px;
   }
@@ -1237,6 +1346,27 @@ main {
 .detail-info-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}
+
+.restaurant-info-grid .distance-info-item,
+.detail-info-grid .distance-info-item {
+  border-color: #b9dfd4;
+  background: #edf9f5;
+}
+
+.distance-value {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.distance-value strong {
+  color: #0d6f58;
+}
+
+.distance-value small {
+  color: #39766a;
+  font-size: 0.7rem;
 }
 
 .detail-link-actions {

@@ -8,6 +8,8 @@ import { RestaurantCard } from "./components/RestaurantCard";
 import { AdminAuthActions } from "./components/AdminAuthActions";
 import { FavoritesLink } from "./components/FavoritesLink";
 import { BackToTopButton } from "./components/BackToTopButton";
+import { LocationControls } from "./components/LocationControls";
+import { useLocation } from "./location/useLocation";
 import { translateRestaurants } from "./services/deeplApi";
 import {
   fetchHotpepperRestaurants,
@@ -33,6 +35,7 @@ import { getRestaurantCanonicalId } from "./utils/restaurantId";
 import { sortRestaurantResults } from "./utils/restaurantSort";
 
 function App() {
+  const { coordinates, status: locationStatus } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [restaurants, setRestaurants] = useState(getSampleRestaurants);
   const selectedFeatures = useMemo(
@@ -255,8 +258,13 @@ function App() {
   }, [restaurants, selectedFeatures, selectedArea]);
 
   const sortedRestaurants = useMemo(
-    () => sortRestaurantResults(restaurantResults, selectedSort),
-    [restaurantResults, selectedSort],
+    () =>
+      sortRestaurantResults(
+        restaurantResults,
+        selectedSort,
+        locationStatus === "success" ? coordinates : null,
+      ),
+    [coordinates, locationStatus, restaurantResults, selectedSort],
   );
 
   const hasApiRestaurants = sortedRestaurants.some(
@@ -411,8 +419,11 @@ function App() {
               >
                 <option value="match">Best match / マッチ率が高い順</option>
                 <option value="budget">Lowest budget / 予算が安い順</option>
+                <option value="distance">Nearest / 現在地から近い順</option>
               </select>
             </label>
+
+            <LocationControls selectedSort={selectedSort} />
 
             {!loadingState && !errorMessage && (
               <p className="result-count">
