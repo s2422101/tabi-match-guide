@@ -1,35 +1,38 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { getReturnPath } from "../utils/restaurantSearch";
+import {
+  getSafePublicReturnPath,
+  getSafeUserReturnPath,
+} from "../utils/restaurantSearch";
 
-export function AdminLoginPage() {
-  const { configurationError, isAdmin, signInAdmin } = useAuth();
+export function UserLoginPage() {
+  const { configurationError, isLoading, signIn, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const returnPath = getReturnPath(location.state) || "/";
+  const returnPath = getSafeUserReturnPath(location.state, "/mypage");
+  const publicReturnPath = getSafePublicReturnPath(location.state);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (!isLoading && user) {
       navigate(returnPath, { replace: true });
     }
-  }, [isAdmin, navigate, returnPath]);
+  }, [isLoading, navigate, returnPath, user]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
-
     try {
-      await signInAdmin(email, password);
+      await signIn(email, password);
       navigate(returnPath, { replace: true });
     } catch (error: unknown) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Could not sign in.",
+        error instanceof Error ? error.message : "Could not log in.",
       );
     } finally {
       setIsSubmitting(false);
@@ -37,15 +40,11 @@ export function AdminLoginPage() {
   };
 
   return (
-    <main className="auth-page">
+    <main className="auth-page user-auth-page">
       <section className="auth-panel">
-        <p className="eyebrow">Restaurant management</p>
-        <h1>Administrator login</h1>
-        <p className="section-title-ja">管理者ログイン</p>
-        <p className="auth-description">
-          Sign in with an authorized administrator account.
-          <span>許可された管理者アカウントでログインしてください。</span>
-        </p>
+        <p className="eyebrow">Your TabiMatch account</p>
+        <h1>User login</h1>
+        <p className="section-title-ja">ユーザーログイン</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="edit-field">
@@ -60,7 +59,6 @@ export function AdminLoginPage() {
               disabled={isSubmitting || Boolean(configurationError)}
             />
           </label>
-
           <label className="edit-field">
             <strong>Password</strong>
             <small>パスワード</small>
@@ -76,7 +74,7 @@ export function AdminLoginPage() {
 
           {(configurationError || errorMessage) && (
             <p className="auth-error" role="alert">
-              <strong>Could not sign in.</strong>
+              <strong>Could not log in.</strong>
               <span>ログインできませんでした。</span>
               <small>{configurationError || errorMessage}</small>
             </p>
@@ -87,15 +85,21 @@ export function AdminLoginPage() {
             className="save-button auth-submit"
             disabled={isSubmitting || Boolean(configurationError)}
           >
-            {isSubmitting ? "Signing in..." : "Log in"}
+            {isSubmitting ? "Logging in..." : "Log in"}
             <span>{isSubmitting ? "ログイン中…" : "ログイン"}</span>
           </button>
         </form>
 
-        <Link to="/" replace className="back-link auth-back-link">
-          <strong>Go back</strong>
-          <span>前の画面へ戻る</span>
-        </Link>
+        <div className="user-auth-secondary-actions">
+          <Link to="/signup" state={location.state}>
+            <strong>Create account</strong>
+            <span>アカウント作成</span>
+          </Link>
+          <Link to={publicReturnPath} replace>
+            <strong>Continue without logging in</strong>
+            <span>ログインせずに利用する</span>
+          </Link>
+        </div>
       </section>
     </main>
   );

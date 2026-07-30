@@ -4,7 +4,7 @@ import { useFavorites } from "../favorites/useFavorites";
 import { getRestaurantCanonicalId } from "../utils/restaurantId";
 
 export function FavoriteButton({ restaurant }: { restaurant: Restaurant }) {
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isFavorite, isLoading, isSyncing, toggleFavorite } = useFavorites();
   const restaurantId = getRestaurantCanonicalId(restaurant);
   const saved = isFavorite(restaurantId);
   const englishLabel = saved ? "Remove from favorites" : "Add to favorites";
@@ -13,7 +13,7 @@ export function FavoriteButton({ restaurant }: { restaurant: Restaurant }) {
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    toggleFavorite(restaurantId);
+    void toggleFavorite(restaurantId);
   };
 
   return (
@@ -24,6 +24,7 @@ export function FavoriteButton({ restaurant }: { restaurant: Restaurant }) {
       aria-label={`${englishLabel}: ${restaurant.nameEn}`}
       aria-pressed={saved}
       title={`${englishLabel} / ${japaneseLabel}`}
+      disabled={isLoading || isSyncing}
     >
       <span className="favorite-heart" aria-hidden="true">
         {saved ? "♥" : "♡"}

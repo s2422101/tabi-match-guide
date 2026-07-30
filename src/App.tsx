@@ -12,7 +12,7 @@ import { HotpepperAttribution } from "./components/HotpepperAttribution";
 import { PreferenceForm } from "./components/PreferenceForm";
 import { preferenceOptions } from "./components/preferenceOptions";
 import { RestaurantCard } from "./components/RestaurantCard";
-import { AdminAuthActions } from "./components/AdminAuthActions";
+import { UserAuthActions } from "./components/UserAuthActions";
 import { FavoritesLink } from "./components/FavoritesLink";
 import { BackToTopButton } from "./components/BackToTopButton";
 import { LocationControls } from "./components/LocationControls";
@@ -41,6 +41,8 @@ import {
 } from "./utils/restaurantSearch";
 import { getRestaurantCanonicalId } from "./utils/restaurantId";
 import { sortRestaurantResults } from "./utils/restaurantSort";
+import { useUserPreferences } from "./preferences/useUserPreferences";
+import { FavoriteSyncNotice } from "./components/FavoriteSyncNotice";
 
 const RestaurantResultsMap = lazy(() =>
   import("./components/RestaurantResultsMap").then((module) => ({
@@ -49,6 +51,7 @@ const RestaurantResultsMap = lazy(() =>
 );
 
 function App() {
+  const { preferences, isLoading: isLoadingPreferences } = useUserPreferences();
   const { coordinates, status: locationStatus } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [restaurants, setRestaurants] = useState(getSampleRestaurants);
@@ -132,6 +135,32 @@ function App() {
   const handleSortChange = (sort: RestaurantSort) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("sort", sort);
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const handleApplyUserPreferences = () => {
+    if (!preferences) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams();
+    if (preferences.preferredArea !== "all") {
+      nextParams.set("area", preferences.preferredArea);
+    }
+    if (preferences.preferredFeatures.length > 0) {
+      nextParams.set("features", preferences.preferredFeatures.join(","));
+    }
+    if (preferences.preferredSort !== "match") {
+      nextParams.set("sort", preferences.preferredSort);
+    }
+
+    if (preferences.preferredArea !== selectedArea) {
+      setLoadingState("restaurants");
+    }
+    setDraftArea(preferences.preferredArea);
+    setDraftFeatures(preferences.preferredFeatures);
+    setAreFiltersOpen(false);
+    shouldScrollToResultsRef.current = true;
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -300,7 +329,7 @@ function App() {
       <header className="hero">
         <div className="hero-admin-actions">
           <FavoritesLink />
-          <AdminAuthActions />
+          <UserAuthActions />
         </div>
         <p className="eyebrow">TabiMatch Guide</p>
         <h1>Find a restaurant that fits your needs.</h1>
@@ -315,7 +344,20 @@ function App() {
         </p>
       </header>
 
+      <FavoriteSyncNotice />
+
       <div className="filters-container">
+        {preferences && (
+          <button
+            type="button"
+            className="apply-preferences-button"
+            onClick={handleApplyUserPreferences}
+            disabled={isLoadingPreferences || Boolean(loadingState)}
+          >
+            <strong>Apply my preferences</strong>
+            <span>登録条件を反映</span>
+          </button>
+        )}
         <button
           type="button"
           className="filters-toggle"

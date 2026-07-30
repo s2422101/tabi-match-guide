@@ -4,6 +4,7 @@ import type {
   SearchArea,
 } from "../types/restaurant";
 import { restaurantFeatures } from "./features";
+import type { UserPreferences } from "../types/userPreferences";
 
 const validAreas: SearchArea[] = ["all", "Asakusa", "Ueno"];
 const validSorts: RestaurantSort[] = ["match", "budget", "distance"];
@@ -77,6 +78,52 @@ export function getAdminReturnPath(state: unknown): string | null {
     (adminReturnTo === "/admin" || adminReturnTo.startsWith("/admin?"))
     ? adminReturnTo
     : null;
+}
+
+export function getSafeUserReturnPath(
+  state: unknown,
+  fallback: string,
+): string {
+  const returnPath = getReturnPath(state);
+  if (!returnPath) {
+    return fallback;
+  }
+
+  const pathname = returnPath.split(/[?#]/, 1)[0];
+  if (
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    /^\/restaurants\/[^/]+\/edit\/?$/.test(pathname)
+  ) {
+    return fallback;
+  }
+
+  return returnPath;
+}
+
+export function getSafePublicReturnPath(state: unknown): string {
+  const returnPath = getSafeUserReturnPath(state, "/");
+  const pathname = returnPath.split(/[?#]/, 1)[0];
+  return pathname === "/mypage" ? "/" : returnPath;
+}
+
+export function getSearchPathFromPreferences(
+  preferences: UserPreferences,
+): string {
+  const parameters = new URLSearchParams();
+
+  if (preferences.preferredArea !== "all") {
+    parameters.set("area", preferences.preferredArea);
+  }
+  if (preferences.preferredFeatures.length > 0) {
+    parameters.set("features", preferences.preferredFeatures.join(","));
+  }
+  if (preferences.preferredSort !== "match") {
+    parameters.set("sort", preferences.preferredSort);
+  }
+
+  const query = parameters.toString();
+  return query ? `/?${query}` : "/";
 }
 
 export function canNavigateBack(): boolean {

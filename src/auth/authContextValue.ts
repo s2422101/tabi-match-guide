@@ -8,6 +8,11 @@ export type AuthContextValue = {
   isLoading: boolean;
   configurationError: string | null;
   signIn: (email: string, password: string) => Promise<void>;
+  signInAdmin: (email: string, password: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
 };

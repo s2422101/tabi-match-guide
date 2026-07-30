@@ -9,10 +9,11 @@ import {
 import { FeatureStatusItem } from "../components/FeatureStatusItem";
 import { HotpepperAttribution } from "../components/HotpepperAttribution";
 import { MatchSummary } from "../components/MatchSummary";
-import { AdminAuthActions } from "../components/AdminAuthActions";
+import { UserAuthActions } from "../components/UserAuthActions";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FavoritesLink } from "../components/FavoritesLink";
 import { RestaurantDistance } from "../components/RestaurantDistance";
+import { FavoriteSyncNotice } from "../components/FavoriteSyncNotice";
 import { useScrollToTopOnPathChange } from "../hooks/useScrollToTopOnPathChange";
 import { useAuth } from "../auth/useAuth";
 import { getFeatureStatus } from "../utils/features";
@@ -157,9 +158,11 @@ export function RestaurantDetailPage() {
         </button>
         <div className="detail-nav-actions">
           <FavoritesLink />
-          <AdminAuthActions />
+          <UserAuthActions />
         </div>
       </nav>
+
+      <FavoriteSyncNotice />
 
       <section className="detail-hero">
         <img

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { AdminAuthActions } from "../components/AdminAuthActions";
+import { UserAuthActions } from "../components/UserAuthActions";
 import { HotpepperAttribution } from "../components/HotpepperAttribution";
 import { RestaurantCard } from "../components/RestaurantCard";
 import { useFavorites } from "../favorites/useFavorites";
@@ -20,7 +20,12 @@ import {
 import { calculateMatchResult } from "../utils/match";
 
 export function FavoritesPage() {
-  const { favoriteIds } = useFavorites();
+  const {
+    favoriteIds,
+    isLoading: isLoadingFavoriteSync,
+    isSyncing: isSyncingFavorites,
+    errorMessage: favoriteSyncError,
+  } = useFavorites();
   const [searchParams] = useSearchParams();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isLoading, setIsLoading] = useState(favoriteIds.length > 0);
@@ -108,7 +113,7 @@ export function FavoritesPage() {
             <strong>Back to restaurant search</strong>
             <span>店舗検索へ戻る</span>
           </Link>
-          <AdminAuthActions />
+          <UserAuthActions />
         </nav>
 
         <p className="eyebrow">Saved restaurants</p>
@@ -117,7 +122,26 @@ export function FavoritesPage() {
       </header>
 
       <section className="favorites-content">
-        {isLoading ? (
+        {(isLoadingFavoriteSync || isSyncingFavorites) && (
+          <div className="favorites-sync-status" aria-live="polite">
+            <strong>
+              {isSyncingFavorites ? "Syncing favorites..." : "Loading favorites..."}
+            </strong>
+            <span>
+              {isSyncingFavorites
+                ? "お気に入りを同期しています…"
+                : "お気に入りを読み込んでいます…"}
+            </span>
+          </div>
+        )}
+        {favoriteSyncError && (
+          <div className="favorites-sync-status sync-error" role="alert">
+            <strong>Could not sync favorites.</strong>
+            <span>お気に入りを同期できませんでした。</span>
+            <small>{favoriteSyncError}</small>
+          </div>
+        )}
+        {isLoadingFavoriteSync ? null : isLoading ? (
           <div className="results-status" aria-live="polite">
             <strong>Loading favorite restaurants...</strong>
             <span>お気に入りの店舗を読み込んでいます…</span>

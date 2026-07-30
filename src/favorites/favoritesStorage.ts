@@ -1,4 +1,5 @@
 export const FAVORITES_STORAGE_KEY = "tabi-match-guide:favorites:v1";
+const FAVORITES_MIGRATION_PREFIX = "tabi-match-guide:favorites-migrated:";
 
 type StoredFavorites = {
   version: 1;
@@ -64,5 +65,17 @@ export function writeFavoriteRestaurantIds(restaurantIds: string[]): void {
     window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(value));
   } catch {
     // Storage restrictions or quota errors must not break restaurant browsing.
+  }
+}
+
+export function getFavoritesMigrationKey(userId: string): string {
+  return `${FAVORITES_MIGRATION_PREFIX}${userId}`;
+}
+
+export function markFavoritesMigrated(userId: string): void {
+  try {
+    window.localStorage.setItem(getFavoritesMigrationKey(userId), "true");
+  } catch {
+    // A missing marker only causes a safe retry on the next session.
   }
 }

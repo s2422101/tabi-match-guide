@@ -30,6 +30,12 @@ async function verifyAdminSession(session: Session): Promise<boolean> {
   );
 }
 
+function getSignInErrorMessage(message?: string): string {
+  return message?.toLocaleLowerCase().includes("email not confirmed")
+    ? "Please confirm your email address before logging in."
+    : "The email address or password is incorrect.";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = getBrowserSupabaseClient();
   const [session, setSession] = useState<Session | null>(null);
@@ -88,18 +94,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error || !data.session) {
+      throw new Error(getSignInErrorMessage(error?.message));
+    }
+
+    setSession(data.session);
+    setIsLoading(true);
+    const admin = await verifyAdminSession(data.session).catch(() => false);
+    setIsAdmin(admin);
+    setIsLoading(false);
+  };
+
+  const signInAdmin = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error(authConfigurationError || "Authentication is unavailable.");
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error || !data.session) {
       throw new Error("The email address or password is incorrect.");
     }
 
-    const admin = await verifyAdminSession(data.session);
+    const admin = await verifyAdminSession(data.session).catch(() => false);
     if (!admin) {
       await supabase.auth.signOut();
+      setSession(null);
+      setIsAdmin(false);
+      setIsLoading(false);
       throw new Error("This account is not authorized as an administrator.");
     }
 
     setSession(data.session);
     setIsAdmin(true);
     setIsLoading(false);
+  };
+
+  const signUp = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error(authConfigurationError || "Authentication is unavailable.");
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/mypage`,
+      },
+    });
+
+    if (error || !data.user) {
+      throw new Error(error?.message || "Could not create the account.");
+    }
+
+    if (data.session) {
+      setSession(data.session);
+      setIsLoading(true);
+      const admin = await verifyAdminSession(data.session).catch(() => false);
+      setIsAdmin(admin);
+      setIsLoading(false);
+    }
+
+    return { requiresEmailConfirmation: !data.session };
   };
 
   const signOut = async () => {
@@ -132,6 +190,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         configurationError: authConfigurationError,
         signIn,
+        signInAdmin,
+        signUp,
         signOut,
         getAccessToken,
       }}

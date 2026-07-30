@@ -1,7 +1,7 @@
 # TabiMatch Guide
 
-浅草・上野周辺の飲食店を、希望条件とのマッチ率と英語翻訳付きで探し、ブラウザーごとのお気に入りへ保存できるReactアプリです。
-ホットペッパーグルメAPI、DeepL API、Supabaseは、Honoバックエンドを経由して呼び出します。
+浅草・上野周辺の飲食店を、希望条件とのマッチ率と英語翻訳付きで探し、未ログイン時はブラウザー、ログイン時はSupabaseへお気に入りを保存できるReactアプリです。
+ホットペッパーグルメAPI、DeepL API、店舗独自情報のSupabase操作はHonoバックエンドを経由します。一般ユーザーのお気に入りと検索条件は、ブラウザー用anon keyとRLSを使ってSupabaseへ直接保存します。
 
 以下のコマンドは、プロジェクト直下をカレントディレクトリにして実行してください。
 
@@ -19,6 +19,8 @@ cd /path/to/tabi-match-guide
 - `PUT /api/restaurants/:restaurantId/support`
 - `GET /api/auth/me`
 - 管理者ログイン: `/admin/login`
+- 一般ユーザーログイン・登録: `/login`、`/signup`
+- マイページ: `/mypage`
 - お気に入り一覧: `/favorites`
 
 ## セットアップ
@@ -52,11 +54,14 @@ SupabaseのService Roleキーは強い権限を持つため、フロントエン
 
 `ADMIN_EMAILS`には、更新を許可するSupabase Authユーザーのメールアドレスをカンマ区切りで指定します。比較時は前後の空白と大文字小文字を無視します。未設定の場合、すべてのPUTが403になります。
 
-## 管理者ユーザー
+## 一般ユーザーと管理者ユーザー
 
-Supabase Dashboardの「Authentication」→「Users」から「Add user」を選び、メールアドレスと十分に強いパスワードを設定します。そのメールアドレスを`ADMIN_EMAILS`にも追加し、Honoサーバーを再起動してください。一般利用者向けのサインアップ画面は実装していません。
+一般ユーザーは`/signup`からメールアドレスとパスワードで登録できます。メール確認の要否はSupabase Authの設定に従います。
+
+管理者はSupabase Dashboardの「Authentication」→「Users」から作成するか、一般登録後に、そのメールアドレスを`ADMIN_EMAILS`へ追加してHonoサーバーを再起動してください。一般登録だけでは管理者権限は付与されません。
 
 Supabase Dashboardの「Authentication」→「Sign In / Providers」でEmail providerが有効になっていることも確認してください。
+メール確認を有効にする場合は「Authentication」→「URL Configuration」のSite URLへ公開フロントURLを設定し、Redirect URLsへ`http://localhost:5173/mypage`と`https://your-app.vercel.app/mypage`を追加してください。
 
 ## Supabaseテーブル
 
@@ -80,6 +85,14 @@ grant select, insert, update on table public.restaurant_support to service_role;
 ```
 
 HonoがService Roleキーでアクセスするため、`anon`や`authenticated`向けのRLSポリシーは作成しません。PUTではHonoがSupabase Authのaccess tokenと`ADMIN_EMAILS`を検証します。本番公開時は、ログイン試行と更新APIへのレート制限、監査ログも追加してください。
+
+一般ユーザーのお気に入りと検索条件用テーブルは、次のmigrationをSupabase SQL EditorまたはSupabase CLIで適用してください。
+
+```text
+supabase/migrations/202607300001_user_accounts.sql
+```
+
+このmigrationは`user_preferences`と`user_favorites`を作成し、`auth.uid() = user_id`に限定したSELECT・INSERT・UPDATE・DELETEのRLSポリシーを設定します。ブラウザーはanon keyでSupabaseへ接続しますが、認証済みユーザー本人の行以外は読み書きできません。
 
 ## 起動
 
