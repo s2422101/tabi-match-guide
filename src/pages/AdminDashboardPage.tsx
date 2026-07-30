@@ -176,7 +176,7 @@ export function AdminDashboardPage() {
   return (
     <main className="admin-dashboard-page">
       <header className="admin-dashboard-header">
-        <div>
+        <div className="admin-dashboard-header-copy">
           <p className="eyebrow">Restaurant management</p>
           <h1>Admin dashboard</h1>
           <p className="section-title-ja">管理者ダッシュボード</p>

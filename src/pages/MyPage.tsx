@@ -158,7 +158,7 @@ export function MyPage() {
   return (
     <main className="mypage">
       <header className="mypage-header">
-        <div>
+        <div className="mypage-header-copy">
           <p className="eyebrow">Your TabiMatch account</p>
           <h1>My Page</h1>
           <p className="section-title-ja">マイページ</p>

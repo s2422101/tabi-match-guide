@@ -331,15 +331,13 @@ function App() {
           <FavoritesLink />
           <UserAuthActions />
         </div>
-        <p className="eyebrow">TabiMatch Guide</p>
+        <p className="hero-brand">TABIMATCH GUIDE</p>
         <h1>Find a restaurant that fits your needs.</h1>
         <p className="hero-ja">あなたの条件に合う日本の飲食店を探す</p>
         <p className="hero-description">
-          Discover Japanese restaurants based on your dietary needs, payment
-          preferences and required facilities.
+          Find restaurants by dietary needs, payment options and facilities.
           <span className="hero-description-ja">
-            食習慣、避けたい食材、支払い方法、店内設備などから、
-            自分に合った飲食店を検索できます。
+            食習慣や支払い方法、設備から、安心して選べるお店を探せます。
           </span>
         </p>
       </header>
