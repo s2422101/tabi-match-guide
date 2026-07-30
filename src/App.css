@@ -2485,3 +2485,272 @@ main {
     height: 310px;
   }
 }
+
+/* Compact restaurant cards on small screens */
+.mobile-compact-info,
+.card-expand-button {
+  display: none;
+}
+
+.restaurant-card-footer-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .restaurant-card {
+    border-radius: 18px;
+  }
+
+  .restaurant-card .restaurant-image {
+    height: 170px;
+  }
+
+  .restaurant-card .restaurant-content {
+    padding: 16px;
+  }
+
+  .restaurant-card .restaurant-heading,
+  .restaurant-card-actions {
+    gap: 9px;
+  }
+
+  .restaurant-card .restaurant-area {
+    margin-bottom: 4px;
+    font-size: 0.78rem;
+  }
+
+  .restaurant-card .restaurant-heading h3 {
+    font-size: 1.3rem;
+    line-height: 1.25;
+  }
+
+  .restaurant-card .restaurant-name-ja {
+    margin: 3px 0 0;
+    font-size: 0.76rem;
+  }
+
+  .restaurant-card-actions .favorite-button {
+    min-height: 42px;
+    padding-block: 7px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-summary {
+    gap: 6px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-summary .match-score {
+    display: grid;
+    min-height: 62px;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 0 9px;
+    border-radius: 13px;
+    padding: 8px 11px;
+    text-align: left;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-score strong {
+    grid-row: 1 / 3;
+    align-self: center;
+    font-size: 1.35rem;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-score span,
+  .restaurant-card:not(.is-card-expanded) .match-score small {
+    align-self: end;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-score small {
+    align-self: start;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-summary.insufficient .match-score strong {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-calculation-note,
+  .restaurant-card:not(.is-card-expanded) .information-coverage p:first-child {
+    display: none;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .information-coverage {
+    padding: 6px 9px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .information-coverage p {
+    align-items: baseline;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .coverage-full-label {
+    display: none;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .limited-information-note {
+    display: inline-flex;
+    width: fit-content;
+    flex-direction: row;
+    align-items: baseline;
+    align-self: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 4px 9px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .limited-information-note strong,
+  .restaurant-card:not(.is-card-expanded) .limited-information-note small {
+    font-size: 0.62rem;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .match-breakdown {
+    gap: 4px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .breakdown-item {
+    min-height: 42px;
+    flex-flow: row wrap;
+    justify-content: center;
+    gap: 2px 4px;
+    padding: 5px 3px;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .breakdown-item > span {
+    width: 18px;
+    height: 18px;
+    font-size: 0.64rem;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .breakdown-item strong {
+    font-size: 0.6rem;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .breakdown-item small {
+    width: 100%;
+    font-size: 0.54rem;
+  }
+
+  .mobile-compact-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin: 12px 0;
+  }
+
+  .mobile-compact-info > div {
+    min-width: 0;
+    border: 1px solid #dce4e1;
+    border-radius: 10px;
+    padding: 8px 9px;
+    background: #fafcfb;
+  }
+
+  .mobile-compact-info dt {
+    color: #126b5a;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .mobile-compact-info dt small {
+    margin-left: 3px;
+    color: #73807c;
+    font-size: 0.6rem;
+    font-weight: 500;
+  }
+
+  .mobile-compact-info dd {
+    overflow-wrap: anywhere;
+    margin: 3px 0 0;
+    color: #47524f;
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .mobile-compact-info .distance-info-item {
+    border-color: #b9dfd4;
+    background: #edf9f5;
+  }
+
+  .mobile-compact-info .distance-value strong {
+    font-size: 0.72rem;
+  }
+
+  .mobile-compact-info .distance-value small {
+    display: none;
+  }
+
+  .restaurant-card:not(.is-card-expanded) .restaurant-expandable-content {
+    display: none;
+  }
+
+  .restaurant-card.is-card-expanded .restaurant-expandable-content {
+    display: block;
+  }
+
+  .restaurant-card .restaurant-description {
+    margin-top: 14px;
+  }
+
+  .restaurant-card .restaurant-expandable-content .restaurant-info-budget,
+  .restaurant-card .restaurant-expandable-content .distance-info-item {
+    display: none;
+  }
+
+  .restaurant-card-footer-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .card-expand-button {
+    display: flex;
+    min-height: 48px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px solid #167c68;
+    border-radius: 12px;
+    padding: 7px 9px;
+    background: white;
+    color: #126b5a;
+    cursor: pointer;
+  }
+
+  .card-expand-button strong {
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .card-expand-button span {
+    font-size: 0.62rem;
+  }
+
+  .card-expand-button:hover,
+  .card-expand-button:focus-visible {
+    background: #edf9f5;
+    outline: 3px solid rgba(22, 124, 104, 0.16);
+  }
+
+  .restaurant-card-footer-actions .details-button {
+    min-height: 48px;
+    padding: 8px 10px;
+    font-size: 0.76rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .restaurant-card .restaurant-image {
+    height: 155px;
+  }
+
+  .restaurant-card .restaurant-content {
+    padding: 14px;
+  }
+}

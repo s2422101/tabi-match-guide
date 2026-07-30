@@ -53,7 +53,8 @@ export function MatchSummary({ result }: Props) {
               </p>
               <p>
                 <strong>
-                  Information coverage {result.informationCoverage}%
+                  <span className="coverage-full-label">Information </span>
+                  Coverage {result.informationCoverage}%
                 </strong>
                 <small>情報確認度 {result.informationCoverage}%</small>
               </p>

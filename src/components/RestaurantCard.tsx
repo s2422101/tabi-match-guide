@@ -1,3 +1,4 @@
+import { useId, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FeatureStatusItem } from "./FeatureStatusItem";
 import { MatchSummary } from "./MatchSummary";
@@ -23,6 +24,8 @@ export function RestaurantCard({
   selectedFeatures,
   matchResult,
 }: Props) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const expandableContentId = useId();
   const location = useLocation();
   const listPath = `${location.pathname}${location.search}`;
   const restaurantId = getRestaurantCanonicalId(restaurant);
@@ -30,7 +33,9 @@ export function RestaurantCard({
   const returnState: ReturnNavigationState = { from: listPath };
 
   return (
-    <article className="restaurant-card">
+    <article
+      className={`restaurant-card${isExpanded ? " is-card-expanded" : ""}`}
+    >
       <img
         src={restaurant.imageUrl}
         alt={restaurant.nameEn}
@@ -57,77 +62,108 @@ export function RestaurantCard({
           </div>
         </div>
 
-        <p className="translated-content">
-          <span>{restaurant.description}</span>
-          {restaurant.descriptionJa &&
-            restaurant.descriptionJa !== restaurant.description && (
-              <small>{restaurant.descriptionJa}</small>
-            )}
-        </p>
-
-        {(restaurant.address ||
-          restaurant.openingHours ||
-          restaurant.budget ||
+        {(restaurant.budget ||
           (typeof restaurant.latitude === "number" &&
             typeof restaurant.longitude === "number")) && (
-          <dl className="restaurant-info-grid">
-            {restaurant.address && (
-              <div>
-                <dt>Address <small>住所</small></dt>
-                <dd className="translated-content">
-                  <span>{restaurant.address}</span>
-                  {restaurant.addressJa &&
-                    restaurant.addressJa !== restaurant.address && (
-                      <small>{restaurant.addressJa}</small>
-                    )}
-                </dd>
-              </div>
-            )}
-            {restaurant.openingHours && (
-              <div>
-                <dt>Opening hours <small>営業時間</small></dt>
-                <dd className="translated-content">
-                  <span>{restaurant.openingHours}</span>
-                  {restaurant.openingHoursJa &&
-                    restaurant.openingHoursJa !== restaurant.openingHours && (
-                      <small>{restaurant.openingHoursJa}</small>
-                    )}
-                </dd>
-              </div>
-            )}
+          <dl className="mobile-compact-info">
             {restaurant.budget && (
               <div>
                 <dt>Budget <small>予算</small></dt>
-                <dd className="translated-content">
-                  <span>{restaurant.budget}</span>
-                  {restaurant.budgetJa &&
-                    restaurant.budgetJa !== restaurant.budget && (
-                      <small>{restaurant.budgetJa}</small>
-                    )}
-                </dd>
+                <dd>{restaurant.budget}</dd>
               </div>
             )}
             <RestaurantDistance restaurant={restaurant} />
           </dl>
         )}
 
-        <div className="match-details">
-          {selectedFeatures.map((feature) => (
-            <FeatureStatusItem
-              feature={feature}
-              status={getFeatureStatus(restaurant, feature)}
-              key={feature}
-            />
-          ))}
+        <div id={expandableContentId} className="restaurant-expandable-content">
+          <p className="translated-content restaurant-description">
+            <span>{restaurant.description}</span>
+            {restaurant.descriptionJa &&
+              restaurant.descriptionJa !== restaurant.description && (
+                <small>{restaurant.descriptionJa}</small>
+              )}
+          </p>
+
+          {(restaurant.address ||
+            restaurant.openingHours ||
+            restaurant.budget ||
+            (typeof restaurant.latitude === "number" &&
+              typeof restaurant.longitude === "number")) && (
+            <dl className="restaurant-info-grid">
+              {restaurant.address && (
+                <div className="restaurant-info-address">
+                  <dt>Address <small>住所</small></dt>
+                  <dd className="translated-content">
+                    <span>{restaurant.address}</span>
+                    {restaurant.addressJa &&
+                      restaurant.addressJa !== restaurant.address && (
+                        <small>{restaurant.addressJa}</small>
+                      )}
+                  </dd>
+                </div>
+              )}
+              {restaurant.openingHours && (
+                <div className="restaurant-info-opening-hours">
+                  <dt>Opening hours <small>営業時間</small></dt>
+                  <dd className="translated-content">
+                    <span>{restaurant.openingHours}</span>
+                    {restaurant.openingHoursJa &&
+                      restaurant.openingHoursJa !== restaurant.openingHours && (
+                        <small>{restaurant.openingHoursJa}</small>
+                      )}
+                  </dd>
+                </div>
+              )}
+              {restaurant.budget && (
+                <div className="restaurant-info-budget">
+                  <dt>Budget <small>予算</small></dt>
+                  <dd className="translated-content">
+                    <span>{restaurant.budget}</span>
+                    {restaurant.budgetJa &&
+                      restaurant.budgetJa !== restaurant.budget && (
+                        <small>{restaurant.budgetJa}</small>
+                      )}
+                  </dd>
+                </div>
+              )}
+              <RestaurantDistance restaurant={restaurant} />
+            </dl>
+          )}
+
+          <div className="match-details">
+            {selectedFeatures.map((feature) => (
+              <FeatureStatusItem
+                feature={feature}
+                status={getFeatureStatus(restaurant, feature)}
+                key={feature}
+              />
+            ))}
+          </div>
         </div>
 
-        <Link
-          to={detailPath}
-          state={returnState}
-          className="details-button"
-        >
-          View restaurant
-        </Link>
+        <div className="restaurant-card-footer-actions">
+          <button
+            type="button"
+            className="card-expand-button"
+            aria-expanded={isExpanded}
+            aria-controls={expandableContentId}
+            onClick={() => setIsExpanded((expanded) => !expanded)}
+          >
+            <strong>
+              {isExpanded ? "Hide information" : "Show more information"}
+            </strong>
+            <span>{isExpanded ? "詳細情報を閉じる" : "詳細情報を表示"}</span>
+          </button>
+
+          <Link
+            to={detailPath}
+            state={returnState}
+            className="details-button"
+          >
+            View restaurant
+          </Link>
+        </div>
       </div>
     </article>
   );
