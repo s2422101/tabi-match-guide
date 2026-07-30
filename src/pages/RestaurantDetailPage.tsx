@@ -13,6 +13,7 @@ import { AdminAuthActions } from "../components/AdminAuthActions";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FavoritesLink } from "../components/FavoritesLink";
 import { RestaurantDistance } from "../components/RestaurantDistance";
+import { useScrollToTopOnPathChange } from "../hooks/useScrollToTopOnPathChange";
 import { useAuth } from "../auth/useAuth";
 import { getFeatureStatus } from "../utils/features";
 import { calculateMatchResult } from "../utils/match";
@@ -31,6 +32,7 @@ import {
 } from "../utils/restaurantSearch";
 
 export function RestaurantDetailPage() {
+  useScrollToTopOnPathChange();
   const { isAdmin } = useAuth();
   const { restaurantId } = useParams();
   const [searchParams] = useSearchParams();

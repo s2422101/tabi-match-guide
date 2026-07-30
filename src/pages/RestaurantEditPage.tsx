@@ -33,6 +33,7 @@ import {
 } from "../utils/restaurantSearch";
 import { useAuth } from "../auth/useAuth";
 import { AdminAuthActions } from "../components/AdminAuthActions";
+import { useScrollToTopOnPathChange } from "../hooks/useScrollToTopOnPathChange";
 
 const editableFeatures: RestaurantFeature[] = [
   "english_guide",
@@ -53,6 +54,7 @@ const editableStatuses: FeatureStatus[] = [
 ];
 
 export function RestaurantEditPage() {
+  useScrollToTopOnPathChange();
   const { getAccessToken, session } = useAuth();
   const initialAccessToken = useRef(session?.access_token);
   const { restaurantId } = useParams();
